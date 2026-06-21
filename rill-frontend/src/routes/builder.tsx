@@ -80,7 +80,7 @@ function Builder() {
   const [simulateOpen, setSimulateOpen] = useState(false);
   const [guardrails, setGuardrails] = useState<Guardrail[]>(DEFAULT_GUARDRAILS);
   const idRef = useRef(1);
-  const { project } = useReactFlow();
+  const { screenToFlowPosition } = useReactFlow();
 
   const onConnect = useCallback(
     (c: Connection) => setEdges((es) => addEdge({ ...c, animated: true }, es)),
@@ -89,9 +89,18 @@ function Builder() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const list = PROTOCOLS.filter((p) => BACKEND_PROTOCOL_IDS.has(p.id) || !q);
-    if (!q) return list;
-    return list
+    const supported = PROTOCOLS.filter((p) => BACKEND_PROTOCOL_IDS.has(p.id))
+      .sort((a, b) => (a.id === "cetus" ? -1 : b.id === "cetus" ? 1 : 0))
+      .map((p) => ({
+        ...p,
+        actions: p.actions.filter((a) =>
+          (p.id === "cetus" && a.id === "swap") || (p.id === "haedal" && a.id === "stake"),
+        ),
+      }));
+
+    if (!q) return supported;
+
+    return supported
       .map((p) => ({
         ...p,
         actions: p.actions.filter(
@@ -117,10 +126,10 @@ function Builder() {
         color: p.color,
         inputs: action.inputs,
       };
-      const pos = project({ x: 280 + Math.random() * 60, y: 120 + Math.random() * 120 });
+      const pos = screenToFlowPosition({ x: 280 + Math.random() * 60, y: 120 + Math.random() * 120 });
       setNodes((nds) => nds.concat({ id, type: "action", position: pos, data } as Node));
     },
-    [project, setNodes],
+    [screenToFlowPosition, setNodes],
   );
 
   const importDiscovered = useCallback(
@@ -167,8 +176,7 @@ function Builder() {
       if (!p) return;
       const action = p.actions.find((a) => a.id === actionId);
       if (!action) return;
-      const bounds = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      const pos = project({ x: e.clientX - bounds.left, y: e.clientY - bounds.top });
+      const pos = screenToFlowPosition({ x: e.clientX, y: e.clientY });
       const id = `n_${idRef.current++}`;
       const data: ActionNodeData = {
         protocol: p.name,
@@ -180,7 +188,7 @@ function Builder() {
       };
       setNodes((nds) => nds.concat({ id, type: "action", position: pos, data } as Node));
     },
-    [project, setNodes],
+    [screenToFlowPosition, setNodes],
   );
 
   const onDragOver = useCallback((e: React.DragEvent) => {
@@ -214,14 +222,23 @@ function Builder() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <SiteHeader />
-      <div className="flex-1 flex">
+    <div className="h-[100dvh] flex flex-col overflow-hidden">
+      <div className="shrink-0">
+        <SiteHeader />
+      </div>
+      <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Sidebar */}
-        <aside className="w-[320px] shrink-0 border-r border-border/60 bg-card/40 backdrop-blur flex flex-col">
-          <div className="p-4 border-b border-border/60">
+        <aside className="w-[320px] shrink-0 border-r border-border/60 bg-card/40 backdrop-blur flex flex-col min-h-0">
+          <div className="p-4 border-b border-border/60 shrink-0">
             <div className="text-xs uppercase tracking-widest text-muted-foreground">Library</div>
-            <h2 className="mt-1 font-display text-2xl tracking-tight">Sui Protocols</h2>
+            <h2 className="mt-1 font-display text-2xl tracking-tight">Live on testnet</h2>
+            <p className="mt-2 text-[11px] text-muted-foreground leading-relaxed">
+              1. Drag <strong>Cetus swap</strong> or <strong>Haedal stake</strong> to canvas
+              <br />
+              2. Wire nodes (optional): swap output → stake input
+              <br />
+              3. <strong>Simulate</strong> → then <strong>Compile & export</strong> for MCP URL
+            </p>
             <button
               onClick={() => setDiscoverOpen(true)}
               className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-foreground text-background px-3 py-2 text-sm font-medium hover:opacity-90 transition"
@@ -238,7 +255,7 @@ function Builder() {
               />
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+          <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3">
             {filtered.map((p) => (
               <ProtocolGroup key={p.id} p={p} onAdd={addAction} onDragStart={onDragStart} />
             ))}
@@ -248,8 +265,8 @@ function Builder() {
           </div>
         </aside>
 
-        {/* Canvas */}
-        <main className="flex-1 relative">
+        {/* Canvas — fixed viewport; pan/zoom inside ReactFlow only */}
+        <main className="flex-1 min-h-0 relative overflow-hidden">
           <div className="absolute top-3 right-3 z-10 flex flex-wrap gap-2 justify-end">
             <button
               onClick={addPtb}
@@ -282,7 +299,7 @@ function Builder() {
             Drag to wire labeled ports (amount_in → amount_out)
           </div>
 
-          <div className="absolute inset-0" onDrop={onDrop} onDragOver={onDragOver}>
+          <div className="absolute inset-0 touch-none" onDrop={onDrop} onDragOver={onDragOver}>
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -291,8 +308,12 @@ function Builder() {
               onConnect={onConnect}
               nodeTypes={nodeTypes as any}
               fitView
+              className="h-full w-full"
               proOptions={{ hideAttribution: true }}
               defaultEdgeOptions={{ animated: true }}
+              preventScrolling
+              panOnScroll
+              zoomOnScroll
             >
               <Background variant={BackgroundVariant.Dots} gap={22} size={1.2} color="oklch(0.85 0.02 90)" />
               <Controls showInteractive={false} />

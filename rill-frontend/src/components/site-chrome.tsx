@@ -18,7 +18,7 @@ export function SiteHeader() {
               <circle cx="12" cy="12" r="2" fill="currentColor" />
             </svg>
           </motion.span>
-          <span className="font-display text-xl tracking-tight">Conduit</span>
+          <span className="font-display text-xl tracking-tight">Rill</span>
           <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
             testnet
           </span>
@@ -46,7 +46,7 @@ export function SiteFooter() {
   return (
     <footer className="mt-24 border-t border-border/60">
       <div className="mx-auto max-w-6xl px-6 py-10 flex flex-wrap items-center justify-between gap-4 text-sm text-muted-foreground">
-        <div>© {new Date().getFullYear()} Conduit · Built for Sui Overflow 2026</div>
+        <div>© {new Date().getFullYear()} Rill · Built for Sui Overflow 2026</div>
         <div className="flex gap-4">
           <a href="https://sui.io" target="_blank" rel="noreferrer" className="hover:text-foreground">Sui</a>
           <a href="https://modelcontextprotocol.io" target="_blank" rel="noreferrer" className="hover:text-foreground">MCP</a>
