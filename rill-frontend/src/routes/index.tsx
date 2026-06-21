@@ -78,19 +78,9 @@ function Landing() {
 
       {/* HERO */}
       <section className="relative mx-auto max-w-6xl px-6 pt-16 pb-10">
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/60 backdrop-blur px-3 py-1 text-xs text-muted-foreground"
-        >
-          <Workflow className="h-3.5 w-3.5 text-primary" />
-          Sui Overflow 2026 · Software for Agents
-        </motion.div>
-
         <h1
           ref={headlineRef}
-          className="mt-5 font-display text-5xl md:text-7xl leading-[1.02] tracking-tight max-w-4xl"
+          className="font-display text-5xl md:text-7xl leading-[1.02] tracking-tight max-w-4xl"
         >
           {"Make any Sui dApp usable by AI agents."
             .split(" ")

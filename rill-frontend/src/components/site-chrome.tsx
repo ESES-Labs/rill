@@ -48,7 +48,7 @@ export function SiteFooter() {
   return (
     <footer className="mt-24 border-t border-border/60">
       <div className="mx-auto max-w-6xl px-6 py-10 flex flex-wrap items-center justify-between gap-4 text-sm text-muted-foreground">
-        <div>© {new Date().getFullYear()} Rill · Built for Sui Overflow 2026</div>
+        <div>© {new Date().getFullYear()} Rill</div>
         <div className="flex gap-4">
           <a href="https://sui.io" target="_blank" rel="noreferrer" className="cursor-pointer hover:text-foreground">Sui</a>
           <a href="https://modelcontextprotocol.io" target="_blank" rel="noreferrer" className="cursor-pointer hover:text-foreground">MCP</a>
