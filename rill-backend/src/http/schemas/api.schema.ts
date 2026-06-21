@@ -45,3 +45,16 @@ export const PublishSchema = z.object({
   }),
   policyId: z.string().optional(),
 });
+
+export const ExecuteSchema = z.object({
+  flow: z
+    .object({
+      nodes: z.array(FlowNodeSchema),
+      edges: z.array(FlowEdgeSchema),
+    })
+    .optional(),
+  skillId: z.string().optional(),
+  params: z.record(z.string(), z.any()).optional(),
+  execute: z.boolean().optional(),
+  forceExecute: z.boolean().optional(),
+});

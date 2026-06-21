@@ -1,4 +1,5 @@
 import { DiscoveredFunction, MoveParameter } from './types';
+import { CETUS, HAEDAL, SUI_CLOCK_ID } from '../../core/protocols';
 
 export interface ResolvedParameter extends MoveParameter {
   role: string | null;
@@ -31,7 +32,7 @@ export interface ResolvedManifest {
 
 const CURATED_MANIFESTS: Record<string, ResolvedManifest> = {
   'cetus_swap': {
-    packageId: '0x1eab09450fe65f08ab6d91cd4a553018260408544c2053f3e691232822a1060a',
+    packageId: CETUS.scriptPackageId,
     module: 'pool_script',
     functionName: 'swap_a2b',
     packageVersion: '1',
@@ -43,27 +44,27 @@ const CURATED_MANIFESTS: Record<string, ResolvedManifest> = {
     parameters: [
       {
         index: 0,
-        name: 'clock',
-        moveType: '0x2::clock::Clock',
-        class: 'system',
-        role: 'clock',
+        name: 'global_config',
+        moveType: `${CETUS.clmmPackageId}::config::GlobalConfig`,
+        class: 'object',
+        role: 'global_config',
         boundType: 'none',
         boundOf: null,
         exposure: 'auto',
-        default: '0x6',
+        default: CETUS.globalConfigId,
         confidence: 1.0,
         provenance: 'type'
       },
       {
         index: 1,
         name: 'pool',
-        moveType: '0x1eab09450fe65f08ab6d91cd4a553018260408544c2053f3e691232822a1060a::pool::Pool<T0, T1>',
+        moveType: `${CETUS.clmmPackageId}::pool::Pool<T0, T1>`,
         class: 'object',
         role: 'liquidity_pool',
         boundType: 'none',
         boundOf: null,
         exposure: 'fixed',
-        default: null,
+        default: CETUS.defaultPoolId,
         confidence: 1.0,
         provenance: 'type'
       },
@@ -82,19 +83,6 @@ const CURATED_MANIFESTS: Record<string, ResolvedManifest> = {
       },
       {
         index: 3,
-        name: 'amount_in',
-        moveType: 'u64',
-        class: 'pure',
-        role: 'amount_in',
-        boundType: 'exact',
-        boundOf: 'amount_in',
-        exposure: 'agent_input',
-        default: 0,
-        confidence: 1.0,
-        provenance: 'event'
-      },
-      {
-        index: 4,
         name: 'by_amount_in',
         moveType: 'bool',
         class: 'pure',
@@ -105,6 +93,19 @@ const CURATED_MANIFESTS: Record<string, ResolvedManifest> = {
         default: true,
         confidence: 1.0,
         provenance: 'source'
+      },
+      {
+        index: 4,
+        name: 'amount_in',
+        moveType: 'u64',
+        class: 'pure',
+        role: 'amount_in',
+        boundType: 'exact',
+        boundOf: 'amount_in',
+        exposure: 'agent_input',
+        default: 0,
+        confidence: 1.0,
+        provenance: 'event'
       },
       {
         index: 5,
@@ -128,46 +129,12 @@ const CURATED_MANIFESTS: Record<string, ResolvedManifest> = {
         boundType: 'none',
         boundOf: null,
         exposure: 'fixed',
-        default: '4295048016',
+        default: CETUS.minSqrtPrice,
         confidence: 1.0,
         provenance: 'statistical'
-      }
-    ],
-    emits: [
-      '0x1eab09450fe65f08ab6d91cd4a553018260408544c2053f3e691232822a1060a::pool::SwapEvent'
-    ],
-    touches: {
-      coinTypes: ['T0', 'T1'],
-      sharedObjects: ['0x1eab09450fe65f08ab6d91cd4a553018260408544c2053f3e691232822a1060a::pool::Pool']
-    },
-    safety: {
-      spendingLimitDefault: 1000000000,
-      requiresConfirmation: false
-    }
-  },
-  'haedal_stake': {
-    packageId: '0x587a6cd43685e1302a912a912a912a912a912a912a912a912a912a912a912a9',
-    module: 'liquid_staking',
-    functionName: 'request_stake',
-    packageVersion: '1',
-    resolvedAt: new Date().toISOString(),
-    typeParameters: [],
-    parameters: [
-      {
-        index: 0,
-        name: 'staking_wrapper',
-        moveType: '0x587a6cd43685e1302a912a912a912a912a912a912a912a912a912a912a912a9::liquid_staking::StakingWrapper',
-        class: 'object',
-        role: 'staking_pool',
-        boundType: 'none',
-        boundOf: null,
-        exposure: 'fixed',
-        default: null,
-        confidence: 1.0,
-        provenance: 'type'
       },
       {
-        index: 1,
+        index: 7,
         name: 'clock',
         moveType: '0x2::clock::Clock',
         class: 'system',
@@ -175,7 +142,54 @@ const CURATED_MANIFESTS: Record<string, ResolvedManifest> = {
         boundType: 'none',
         boundOf: null,
         exposure: 'auto',
-        default: '0x6',
+        default: SUI_CLOCK_ID,
+        confidence: 1.0,
+        provenance: 'type'
+      }
+    ],
+    emits: [
+      `${CETUS.clmmPackageId}::pool::SwapEvent`
+    ],
+    touches: {
+      coinTypes: ['T0', 'T1'],
+      sharedObjects: [`${CETUS.clmmPackageId}::pool::Pool`, CETUS.globalConfigId]
+    },
+    safety: {
+      spendingLimitDefault: 1000000000,
+      requiresConfirmation: false
+    }
+  },
+  'haedal_stake': {
+    packageId: HAEDAL.packageId,
+    module: 'interface',
+    functionName: 'request_stake',
+    packageVersion: '1',
+    resolvedAt: new Date().toISOString(),
+    typeParameters: [],
+    parameters: [
+      {
+        index: 0,
+        name: 'sui_system',
+        moveType: '0x3::sui_system::SuiSystemState',
+        class: 'object',
+        role: 'sui_system_state',
+        boundType: 'none',
+        boundOf: null,
+        exposure: 'auto',
+        default: HAEDAL.suiSystemStateId,
+        confidence: 1.0,
+        provenance: 'type'
+      },
+      {
+        index: 1,
+        name: 'staking',
+        moveType: `${HAEDAL.packageId}::staking::Staking`,
+        class: 'object',
+        role: 'staking_pool',
+        boundType: 'none',
+        boundOf: null,
+        exposure: 'fixed',
+        default: HAEDAL.stakingObjectId,
         confidence: 1.0,
         provenance: 'type'
       },
@@ -194,24 +208,24 @@ const CURATED_MANIFESTS: Record<string, ResolvedManifest> = {
       },
       {
         index: 3,
-        name: 'amount',
-        moveType: 'u64',
+        name: 'validator',
+        moveType: 'address',
         class: 'pure',
-        role: 'amount_in',
-        boundType: 'exact',
-        boundOf: 'stake_amount',
-        exposure: 'agent_input',
-        default: 0,
+        role: 'validator_address',
+        boundType: 'none',
+        boundOf: null,
+        exposure: 'fixed',
+        default: '0x0',
         confidence: 1.0,
-        provenance: 'event'
+        provenance: 'source'
       }
     ],
     emits: [
-      '0x587a6cd43685e1302a912a912a912a912a912a912a912a912a912a912a912a9::liquid_staking::StakeEvent'
+      `${HAEDAL.packageId}::staking::UserStaked`
     ],
     touches: {
-      coinTypes: ['0x2::sui::SUI', '0x587a6cd43685e1302a912a912a912a912a912a912a912a912a912a912a9::haedal::HAEDAL'],
-      sharedObjects: ['0x587a6cd43685e1302a912a912a912a912a912a912a912a912a912a912a9::liquid_staking::StakingWrapper']
+      coinTypes: ['0x2::sui::SUI'],
+      sharedObjects: [HAEDAL.stakingObjectId, HAEDAL.suiSystemStateId]
     },
     safety: {
       spendingLimitDefault: 1000000000,
@@ -240,10 +254,10 @@ export class ResolverService {
     const m = moduleName.toLowerCase();
     const f = functionName.toLowerCase();
 
-    if ((p.includes('1eab09') || p.includes('cetus')) && f.includes('swap')) {
+    if ((p.includes('3a5aa9') || p.includes('1eabed') || p.includes('cetus')) && f.includes('swap')) {
       return 'cetus_swap';
     }
-    if ((p.includes('587a6') || p.includes('haedal')) && (f.includes('stake') || f.includes('request_stake'))) {
+    if ((p.includes('126e4c') || p.includes('haedal')) && (f.includes('stake') || f.includes('request_stake'))) {
       return 'haedal_stake';
     }
     return null;

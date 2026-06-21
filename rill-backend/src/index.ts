@@ -24,6 +24,8 @@ app.get('/', (c) => {
     name: 'Rill Bun-Hono API',
     status: 'healthy',
     version: '1.0.0',
+    network: config.network,
+    apiBase: `${config.publicBaseUrl}/api`,
     description: 'Autonomous Move package semantic resolver and visual flow compilation engine for Sui.'
   });
 });
