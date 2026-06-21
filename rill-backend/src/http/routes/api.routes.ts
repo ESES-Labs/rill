@@ -8,6 +8,7 @@ import { skillsStore } from '../../features/mcp/skills.store';
 import { skillRunnerService } from '../../features/mcp/skill-runner.service';
 import { buildToolDefs } from '../../features/mcp/tool-schema';
 import { handleMcpJsonRpc } from '../../features/mcp/mcp.service';
+import { walrusAuditService } from '../../features/walrus/audit.service';
 import { config } from '../../core/config';
 import {
   IntrospectSchema,
@@ -106,6 +107,17 @@ apiRouter.post('/execute', zValidator('json', ExecuteSchema), async (c) => {
   });
 
   return c.json({ success: true, data: result });
+});
+
+apiRouter.get('/audit/:blobId', async (c) => {
+  const blobId = c.req.param('blobId');
+  try {
+    const audit = await walrusAuditService.readAuditTrail(blobId);
+    return c.json({ success: true, data: audit });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to read Walrus audit blob';
+    return c.json({ success: false, error: message }, 404);
+  }
 });
 
 /** MCP JSON-RPC endpoint (tools/list, tools/call) */

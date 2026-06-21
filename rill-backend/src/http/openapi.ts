@@ -88,6 +88,7 @@ export function buildOpenApiDocument(publicBaseUrl: string) {
       { name: 'Introspect', description: 'Move package discovery' },
       { name: 'Compiler', description: 'Flow → PTB compilation and simulation' },
       { name: 'Skills', description: 'MCP skill publish and execution' },
+      { name: 'Walrus', description: 'Decentralized audit trail storage' },
       { name: 'MCP', description: 'Model Context Protocol JSON-RPC' },
     ],
     paths: {
@@ -328,6 +329,13 @@ export function buildOpenApiDocument(publicBaseUrl: string) {
                       simulation: { type: 'object' },
                       executed: { type: 'boolean' },
                       digest: { type: 'string' },
+                      walrus: {
+                        type: 'object',
+                        properties: {
+                          blobId: { type: 'string' },
+                          explorerUrl: { type: 'string', format: 'uri' },
+                        },
+                      },
                       warnings: { type: 'array', items: { type: 'string' } },
                     },
                   }),
@@ -337,6 +345,30 @@ export function buildOpenApiDocument(publicBaseUrl: string) {
             '400': {
               description: 'Missing flow or skillId',
               content: { 'application/json': { schema: errorEnvelope } },
+            },
+          },
+        },
+      },
+      '/audit/{blobId}': {
+        get: {
+          tags: ['Walrus'],
+          summary: 'Read audit trail JSON stored on Walrus',
+          parameters: [
+            {
+              name: 'blobId',
+              in: 'path',
+              required: true,
+              schema: { type: 'string' },
+            },
+          ],
+          responses: {
+            '200': {
+              description: 'Audit record',
+              content: {
+                'application/json': {
+                  schema: successEnvelope({ type: 'object' }),
+                },
+              },
             },
           },
         },

@@ -30,6 +30,7 @@ app.get('/health', (c) =>
     network: config.network,
     apiBase: `${config.publicBaseUrl}/api`,
     docs: config.publicBaseUrl,
+    walrus: config.walrusEnabled,
     description: 'Autonomous Move package semantic resolver and visual flow compilation engine for Sui.',
   }),
 );
