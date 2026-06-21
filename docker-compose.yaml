@@ -1,0 +1,34 @@
+services:
+  rill-backend:
+    image: ghcr.io/eses-labs/rill-backend:${VERSION:-latest}
+    container_name: rill-backend
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.rill-backend.rule=Host(`api.rill.rifuki.dev`)"
+      - "traefik.http.routers.rill-backend.entrypoints=websecure"
+      - "traefik.http.routers.rill-backend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.rill-backend.loadbalancer.server.port=3002"
+    env_file:
+      - ./rill-backend/.env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    networks:
+      - rill-internal
+      - traefik-public
+
+networks:
+  rill-internal:
+    name: rill-internal
+    driver: bridge
+  traefik-public:
+    name: traefik-public
+    external: true
