@@ -67,7 +67,7 @@ export function DiscoverDialog({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-foreground/30 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 cursor-pointer bg-foreground/30 backdrop-blur-sm flex items-center justify-center p-4"
       onClick={onClose}
     >
       <motion.div
@@ -76,7 +76,7 @@ export function DiscoverDialog({
         exit={{ opacity: 0, y: 10, scale: 0.98 }}
         transition={{ duration: 0.22 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-3xl rounded-2xl bg-card border border-border shadow-[var(--shadow-float)] overflow-hidden"
+        className="w-full max-w-3xl cursor-default rounded-2xl bg-card border border-border shadow-[var(--shadow-float)] overflow-hidden"
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div>
@@ -88,7 +88,7 @@ export function DiscoverDialog({
               Paste a package ID — Rill reads the real ABI on-chain and labels every entry function and parameter.
             </p>
           </div>
-          <button onClick={onClose} className="rounded-full p-1.5 hover:bg-secondary">
+          <button onClick={onClose} className="cursor-pointer rounded-full p-1.5 hover:bg-secondary">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -108,7 +108,7 @@ export function DiscoverDialog({
             <button
               onClick={run}
               disabled={loading || !pkg.trim()}
-              className="inline-flex items-center gap-2 rounded-full bg-foreground text-background px-4 py-2 text-sm font-medium hover:opacity-90 transition disabled:opacity-60 whitespace-nowrap"
+              className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-foreground text-background px-4 py-2 text-sm font-medium hover:opacity-90 transition disabled:cursor-not-allowed disabled:opacity-60 whitespace-nowrap"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               {loading ? "Reading ABI…" : "Introspect"}
@@ -184,14 +184,14 @@ export function DiscoverDialog({
               <div className="px-4 py-3 border-t border-border flex justify-end gap-2">
                 <button
                   onClick={onClose}
-                  className="rounded-full border border-border bg-background px-3.5 py-1.5 text-sm hover:bg-secondary transition"
+                  className="cursor-pointer rounded-full border border-border bg-background px-3.5 py-1.5 text-sm hover:bg-secondary transition"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={importPicked}
                   disabled={picked.size === 0}
-                  className="rounded-full bg-foreground text-background px-3.5 py-1.5 text-sm hover:opacity-90 transition disabled:opacity-50"
+                  className="cursor-pointer rounded-full bg-foreground text-background px-3.5 py-1.5 text-sm hover:opacity-90 transition disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Import {picked.size} {picked.size === 1 ? "node" : "nodes"} to canvas
                 </button>

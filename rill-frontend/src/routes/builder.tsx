@@ -319,7 +319,7 @@ function Builder() {
               whileTap={{ scale: 0.98 }}
               transition={{ type: "spring", stiffness: 420, damping: 24 }}
               onClick={() => setDiscoverOpen(true)}
-              className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-foreground text-background px-3 py-2 text-sm font-medium shadow-[var(--shadow-soft)]"
+              className="mt-3 w-full inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-foreground text-background px-3 py-2 text-sm font-medium shadow-[var(--shadow-soft)]"
             >
               <Sparkles className="h-3.5 w-3.5" /> Discover / Import
             </motion.button>
@@ -397,8 +397,8 @@ function Builder() {
                 onClick={onClick}
                 className={
                   primary
-                    ? "inline-flex items-center gap-2 rounded-full bg-foreground text-background px-3.5 py-2 text-sm font-medium shadow-[var(--shadow-float)]"
-                    : "inline-flex items-center gap-2 rounded-full bg-card/90 backdrop-blur border border-border px-3.5 py-2 text-sm font-medium shadow-[var(--shadow-soft)]"
+                    ? "inline-flex cursor-pointer items-center gap-2 rounded-full bg-foreground text-background px-3.5 py-2 text-sm font-medium shadow-[var(--shadow-float)]"
+                    : "inline-flex cursor-pointer items-center gap-2 rounded-full bg-card/90 backdrop-blur border border-border px-3.5 py-2 text-sm font-medium shadow-[var(--shadow-soft)]"
                 }
               >
                 <Icon className="h-4 w-4" /> {label}
@@ -497,7 +497,7 @@ function ProtocolGroup({
     <div className="rounded-xl border border-border/70 bg-card overflow-hidden">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-secondary/60 transition"
+        className="w-full flex cursor-pointer items-center justify-between px-3 py-2.5 hover:bg-secondary/60 transition"
       >
         <div className="flex items-center gap-2">
           <ProtocolLogo protocolId={p.id} name={p.name} />
@@ -538,7 +538,7 @@ function ProtocolGroup({
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => onAdd(p, a.id)}
-                    className="opacity-0 group-hover:opacity-100 transition text-[11px] rounded-md border border-border bg-background px-2 py-1"
+                    className="opacity-0 group-hover:opacity-100 transition cursor-pointer text-[11px] rounded-md border border-border bg-background px-2 py-1"
                   >
                     Add
                   </motion.button>
@@ -646,7 +646,7 @@ function ExportDialog({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-foreground/30 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 cursor-pointer bg-foreground/30 backdrop-blur-sm flex items-center justify-center p-4"
       onClick={onClose}
     >
       <motion.div
@@ -655,7 +655,7 @@ function ExportDialog({
         exit={{ opacity: 0, y: 12, scale: 0.98 }}
         transition={{ type: "spring", stiffness: 380, damping: 28 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-2xl rounded-2xl bg-card border border-border shadow-[var(--shadow-float)] overflow-hidden"
+        className="w-full max-w-2xl cursor-default rounded-2xl bg-card border border-border shadow-[var(--shadow-float)] overflow-hidden"
       >
         <div className="flex items-start justify-between px-5 py-4 border-b border-border gap-4">
           <div className="min-w-0">
@@ -673,7 +673,7 @@ function ExportDialog({
             whileHover={{ scale: 1.08, rotate: 90 }}
             whileTap={{ scale: 0.92 }}
             onClick={onClose}
-            className="rounded-full p-1.5 hover:bg-secondary shrink-0"
+            className="cursor-pointer rounded-full p-1.5 hover:bg-secondary shrink-0"
           >
             <X className="h-4 w-4" />
           </motion.button>
@@ -744,7 +744,7 @@ function ExportDialog({
                     whileHover={{ scale: 1.04 }}
                     whileTap={{ scale: 0.96 }}
                     onClick={() => copy(published.mcpUrl, "mcp")}
-                    className="shrink-0 rounded-full bg-foreground text-background px-4 py-2 text-sm font-medium"
+                    className="shrink-0 cursor-pointer rounded-full bg-foreground text-background px-4 py-2 text-sm font-medium"
                   >
                     <AnimatePresence mode="wait">
                       {copied === "mcp" ? (
@@ -792,7 +792,7 @@ function ExportDialog({
                 <motion.button
                   whileHover={{ x: 2 }}
                   onClick={() => copy(claudeConfig, "config")}
-                  className="mt-2 text-xs text-primary hover:underline"
+                  className="mt-2 cursor-pointer text-xs text-primary hover:underline"
                 >
                   {copied === "config" ? "Copied!" : "Copy config JSON"}
                 </motion.button>

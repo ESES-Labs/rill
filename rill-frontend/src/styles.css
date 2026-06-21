@@ -134,6 +134,29 @@
     font-family: var(--font-display);
     letter-spacing: -0.02em;
   }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  select:not(:disabled),
+  summary,
+  input[type="checkbox"],
+  input[type="radio"],
+  label:has(input[type="checkbox"]),
+  label:has(input[type="radio"]) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  select:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+  textarea {
+    cursor: text;
+  }
 }
 
 /* React Flow tweaks to match design system */
@@ -158,11 +181,16 @@
   background-color: transparent;
 }
 
+.react-flow__edge {
+  cursor: pointer;
+}
+
 .react-flow__edge-path {
   stroke: var(--color-primary);
   stroke-width: 2;
   opacity: 0.75;
   transition: stroke-width 0.15s ease, opacity 0.15s ease;
+  cursor: pointer;
 }
 
 .react-flow__edge.selected .react-flow__edge-path {
@@ -177,6 +205,7 @@
   border: 2px solid var(--color-primary);
   border-radius: 9999px;
   z-index: 2;
+  cursor: pointer;
   /* React Flow positions handles via transform — never override transform on hover */
 }
 
@@ -227,6 +256,7 @@
   background: var(--color-card);
   border-bottom: 1px solid var(--color-border);
   color: var(--color-foreground);
+  cursor: pointer;
 }
 .react-flow__attribution {
   background: transparent;

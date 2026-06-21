@@ -44,12 +44,12 @@ function DeletableEdgeImpl({
             e.stopPropagation();
             setEdges((eds) => eds.filter((edge) => edge.id !== id));
           }}
-          className={`nodrag nopan absolute flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-[var(--shadow-soft)] transition hover:bg-destructive hover:text-destructive-foreground hover:border-destructive/40 ${
-            showDelete ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
-          }`}
+          className="nodrag nopan absolute flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border border-border bg-card text-foreground shadow-[var(--shadow-soft)] hover:bg-destructive hover:text-destructive-foreground hover:border-destructive/40"
           style={{
             transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
+            opacity: showDelete ? 1 : 0,
             pointerEvents: showDelete ? "all" : "none",
+            transition: "opacity 0.12s ease",
           }}
         >
           <X className="h-3 w-3" />

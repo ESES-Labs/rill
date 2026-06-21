@@ -6,12 +6,12 @@ import type { Port } from "@/lib/rill-types";
 import { AlignedHandle, WireRow } from "@/components/flow/aligned-handle";
 import { ProtocolLogo } from "@/components/flow/protocol-logo";
 import {
-  SWAP_TOKENS,
   defaultActionConfig,
   otherSwapToken,
   type ActionConfig,
   type SwapTokenSymbol,
 } from "@/lib/action-config";
+import { TokenBadge, TokenSelect } from "@/components/flow/token-select";
 
 export type ActionNodeData = {
   protocol: string;
@@ -147,37 +147,17 @@ function ActionNodeImpl({ id, data, selected }: NodeProps<ActionNodeData>) {
             />
             <label className="block">
               <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Token in</span>
-              <select
-                className={`${fieldCls} mt-0.5`}
-                value={cfg.tokenIn ?? "SUI"}
-                onChange={(e) => {
-                  const tokenIn = e.target.value as SwapTokenSymbol;
-                  patchConfig({ tokenIn, tokenOut: otherSwapToken(tokenIn) });
-                }}
-              >
-                {SWAP_TOKENS.map((t) => (
-                  <option key={t.symbol} value={t.symbol}>
-                    {t.symbol}
-                  </option>
-                ))}
-              </select>
+              <TokenSelect
+                value={(cfg.tokenIn ?? "SUI") as SwapTokenSymbol}
+                onChange={(tokenIn) => patchConfig({ tokenIn, tokenOut: otherSwapToken(tokenIn) })}
+              />
             </label>
             <label className="block">
               <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Token out</span>
-              <select
-                className={`${fieldCls} mt-0.5`}
-                value={cfg.tokenOut ?? "USDC"}
-                onChange={(e) => {
-                  const tokenOut = e.target.value as SwapTokenSymbol;
-                  patchConfig({ tokenOut, tokenIn: otherSwapToken(tokenOut) });
-                }}
-              >
-                {SWAP_TOKENS.map((t) => (
-                  <option key={t.symbol} value={t.symbol}>
-                    {t.symbol}
-                  </option>
-                ))}
-              </select>
+              <TokenSelect
+                value={(cfg.tokenOut ?? "USDC") as SwapTokenSymbol}
+                onChange={(tokenOut) => patchConfig({ tokenOut, tokenIn: otherSwapToken(tokenOut) })}
+              />
             </label>
             <label className="block">
               <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Amount</span>
@@ -190,7 +170,7 @@ function ActionNodeImpl({ id, data, selected }: NodeProps<ActionNodeData>) {
                   value={cfg.amount ?? "0.1"}
                   onChange={(e) => patchConfig({ amount: e.target.value })}
                 />
-                <span className="text-[10px] font-mono text-muted-foreground shrink-0">{cfg.tokenIn ?? "SUI"}</span>
+                <TokenBadge symbol={(cfg.tokenIn ?? "SUI") as SwapTokenSymbol} />
               </div>
             </label>
             <WireRow

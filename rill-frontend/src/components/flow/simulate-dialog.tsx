@@ -96,7 +96,7 @@ export function SimulateDialog({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-foreground/30 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 cursor-pointer bg-foreground/30 backdrop-blur-sm flex items-center justify-center p-4"
       onClick={onClose}
     >
       <motion.div
@@ -105,7 +105,7 @@ export function SimulateDialog({
         exit={{ opacity: 0, y: 10, scale: 0.98 }}
         transition={{ duration: 0.22 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-3xl rounded-2xl bg-card border border-border shadow-[var(--shadow-float)] overflow-hidden"
+        className="w-full max-w-3xl cursor-default rounded-2xl bg-card border border-border shadow-[var(--shadow-float)] overflow-hidden"
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div>
@@ -114,7 +114,7 @@ export function SimulateDialog({
             </div>
             <h3 className="font-display text-2xl tracking-tight">Dry-run & guardrails</h3>
           </div>
-          <button onClick={onClose} className="rounded-full p-1.5 hover:bg-secondary">
+          <button onClick={onClose} className="cursor-pointer rounded-full p-1.5 hover:bg-secondary">
             <X className="h-4 w-4" />
           </button>
         </div>

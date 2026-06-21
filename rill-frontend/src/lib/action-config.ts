@@ -27,6 +27,11 @@ export const SWAP_TOKENS = [
 
 export type SwapTokenSymbol = (typeof SWAP_TOKENS)[number]["symbol"];
 
+export const TOKEN_LOGOS: Record<SwapTokenSymbol, string> = {
+  SUI: "https://raw.githubusercontent.com/MystenLabs/sui/refs/heads/main/docs/site/static/img/logo.svg",
+  USDC: "https://cryptologos.cc/logos/usd-coin-usdc-logo.svg",
+};
+
 export const TOKEN_COIN_TYPE: Record<SwapTokenSymbol, string> = Object.fromEntries(
   SWAP_TOKENS.map((t) => [t.symbol, t.coinType]),
 ) as Record<SwapTokenSymbol, string>;
