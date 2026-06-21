@@ -490,8 +490,9 @@ function ExportDialog({
           name: published.toolDefs.name,
           description: published.toolDefs.description,
           mcpUrl: published.mcpUrl,
+          skillUrl: published.skillUrl,
           skillId: published.skillId,
-          runtime: { network: "sui:testnet", mode: "keyless", sign: "thiny" },
+          runtime: { network: "sui:mainnet", mode: "keyless", sign: "thiny" },
           guardrails: guardrails.filter((g) => g.enabled).map((g) => g.id),
           warnings: published.warnings,
         },
@@ -560,14 +561,17 @@ function ExportDialog({
             <div className="text-xs uppercase tracking-widest text-muted-foreground">Compile flow</div>
             <h3 className="font-display text-2xl tracking-tight">Ship to your agent</h3>
             {published && (
-              <a
-                href={published.mcpUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs text-primary hover:underline mt-1 block truncate max-w-md"
-              >
-                {published.mcpUrl}
-              </a>
+              <div className="mt-1 space-y-0.5 text-xs">
+                <a
+                  href={published.skillUrl ?? published.mcpUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary hover:underline block truncate max-w-md"
+                >
+                  {published.skillUrl ?? published.mcpUrl}
+                </a>
+                <p className="text-muted-foreground">MCP URL is POST-only — use skill doc or Copy for agents.</p>
+              </div>
             )}
           </div>
           <button onClick={onClose} className="rounded-full p-1.5 hover:bg-secondary">
@@ -605,10 +609,10 @@ function ExportDialog({
             </button>
             {published && (
               <button
-                onClick={() => window.open(published.mcpUrl, "_blank")}
+                onClick={() => window.open(published.skillUrl ?? published.mcpUrl, "_blank")}
                 className="rounded-full bg-foreground text-background px-4 py-2 text-sm hover:opacity-90 transition"
               >
-                Open MCP URL
+                Open skill doc
               </button>
             )}
           </div>

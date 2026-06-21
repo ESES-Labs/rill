@@ -12,6 +12,7 @@ import { skillsStore } from '../../features/mcp/skills.store';
 import { skillRunnerService } from '../../features/mcp/skill-runner.service';
 import { buildToolDefs } from '../../features/mcp/tool-schema';
 import { buildSkillDoc } from '../../features/mcp/skill-doc';
+import { buildMcpLandingHtml } from '../../features/mcp/mcp-landing';
 import { handleMcpJsonRpc } from '../../features/mcp/mcp.service';
 import { walrusAuditService } from '../../features/walrus/audit.service';
 import {
@@ -188,6 +189,12 @@ apiRouter.get('/audit/:blobId', async (c) => {
 });
 
 /** MCP JSON-RPC endpoint (tools/list, tools/call) */
+apiRouter.get('/mcp/:skillId', (c) => {
+  const skill = skillsStore.get(c.req.param('skillId'));
+  if (!skill) return c.text('Skill not found', 404);
+  return c.html(buildMcpLandingHtml(skill));
+});
+
 apiRouter.post('/mcp/:skillId', async (c) => {
   const skillId = c.req.param('skillId');
   const body = await c.req.json();
