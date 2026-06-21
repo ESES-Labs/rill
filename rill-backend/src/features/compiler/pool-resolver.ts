@@ -1,4 +1,4 @@
-import { mainnetSuiClient } from '../../core/config';
+import { suiClient } from '../../core/config';
 import { CETUS } from '../../core/protocols';
 
 export interface PoolTypeArgs {
@@ -6,12 +6,12 @@ export interface PoolTypeArgs {
   coinTypeB: string;
 }
 
-/** Parse `Pool<T0, T1>` from on-chain pool object type (always mainnet for Cetus). */
+/** Parse `Pool<T0, T1>` from on-chain pool object type. */
 export async function resolvePoolTypeArgs(poolId: string): Promise<PoolTypeArgs> {
-  const obj = await mainnetSuiClient.getObject({ id: poolId, options: { showType: true } });
+  const obj = await suiClient.getObject({ id: poolId, options: { showType: true } });
   const poolType = obj.data?.type;
   if (!poolType) {
-    throw new Error(`Pool object ${poolId} not found on mainnet`);
+    throw new Error(`Pool object ${poolId} not found on ${process.env.SUI_NETWORK || 'mainnet'}`);
   }
 
   const match = poolType.match(/Pool<([^,]+),\s*([^>]+)>/);

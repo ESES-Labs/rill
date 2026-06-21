@@ -24,7 +24,19 @@ const MAINNET = {
 } as const;
 
 const TESTNET = {
-  cetus: MAINNET.cetus, // Cetus testnet IDs differ; swap node uses mainnet for now
+  cetus: {
+    integratePackageId: '0xab2d58dd28ff0dc19b18ab2c634397b785a38c342a8f5065ade5f53f9dbffa1c',
+    scriptPackageId: '0xab2d58dd28ff0dc19b18ab2c634397b785a38c342a8f5065ade5f53f9dbffa1c',
+    clmmPackageId: '0x5372d555ac734e272659136c2a0cd3227f9b92de67c80dc11250307268af2db8',
+    globalConfigId: '0xc6273f844b4bc258952c4e477697aa12c918c8e08106fac6b934811298c9820a',
+    /** USDC/SUI testnet pool — verified via on-chain SwapEvent */
+    defaultPoolId: '0x2603c08065a848b719f5f465e40dbef485ec4fd9c967ebe83a7565269a74a2b2',
+    defaultInputCoinType: '0x2::sui::SUI',
+    defaultCoinTypeA: '0x14a71d857b34677a7d57e0feb303df1adb515a37780645ab763d42ce8d1a5e48::usdc::USDC',
+    defaultCoinTypeB: '0x2::sui::SUI',
+    minSqrtPrice: '4295048016',
+    maxSqrtPrice: '79226673515401279992447579055',
+  },
   haedal: {
     packageId: '0x0a6ff2b974e08b65649d334c38db5ca046b78b4a5d892087740b9cdb3eb08e47',
     suiSystemStateId: '0x5',
