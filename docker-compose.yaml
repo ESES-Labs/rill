@@ -8,7 +8,7 @@ services:
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.rill-backend.rule=Host(`api.rill.rifuki.dev`)"
+      - "traefik.http.routers.rill-backend.rule=Host(`api.rill.naisu.one`)"
       - "traefik.http.routers.rill-backend.entrypoints=websecure"
       - "traefik.http.routers.rill-backend.tls.certresolver=letsencrypt"
       - "traefik.http.services.rill-backend.loadbalancer.server.port=3002"
