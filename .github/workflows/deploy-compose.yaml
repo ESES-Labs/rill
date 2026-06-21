@@ -209,8 +209,8 @@ jobs:
           docker compose config --quiet
 
           if [ "${NEED_BACKEND}" = "true" ] || [ "${NEED_COMPOSE}" = "true" ]; then
-            docker compose pull rill-backend
-            docker compose up -d --force-recreate --no-deps rill-backend
+            docker compose pull rill-backend || true
+            docker compose up -d --build --force-recreate --no-deps rill-backend
           else
             printf 'No services need recreation for this deploy.\n'
           fi

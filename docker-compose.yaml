@@ -1,5 +1,8 @@
 services:
   rill-backend:
+    build:
+      context: ./rill-backend
+      dockerfile: Dockerfile
     image: ghcr.io/eses-labs/rill-backend:${VERSION:-latest}
     container_name: rill-backend
     restart: unless-stopped
