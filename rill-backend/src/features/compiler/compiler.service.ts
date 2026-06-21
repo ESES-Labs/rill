@@ -33,10 +33,11 @@ export class CompilerService {
         const amountIn = BigInt(node.inputs?.amount_in ?? node.config?.amount_in ?? 0);
         const minAmountOut = BigInt(node.inputs?.min_amount_out ?? node.config?.min_amount_out ?? 0);
         const poolId = node.inputs?.pool ?? node.config?.pool ?? CETUS.defaultPoolId;
-        const inputCoinType = node.config?.inputCoinType ?? CETUS.defaultInputCoinType;
+        const inputCoinType = node.config?.inputCoinType ?? node.inputs?.inputCoinType ?? CETUS.defaultInputCoinType;
 
         const poolTypes = await resolvePoolTypeArgs(poolId);
         const swap = pickSwapFunction(inputCoinType, poolTypes);
+        const hasDownstream = flow.edges.some((e) => e.source === node.id);
 
         const coinInputEdge = flow.edges.find(
           (e) => e.target === node.id && e.targetHandle === 'coin_inputs',
@@ -50,22 +51,61 @@ export class CompilerService {
           coinInputArg = splitCoin;
         }
 
-        const result = tx.moveCall({
-          target: `${CETUS.scriptPackageId}::${swap.module}::${swap.function}`,
-          typeArguments: swap.typeArguments,
-          arguments: [
-            tx.object(CETUS.globalConfigId),
-            tx.object(poolId),
-            tx.makeMoveVec({ elements: [coinInputArg] }),
-            tx.pure.bool(node.config?.by_amount_in ?? true),
-            tx.pure.u64(amountIn),
-            tx.pure.u64(minAmountOut),
-            tx.pure.u128(BigInt(node.config?.sqrt_price_limit ?? swap.sqrtPriceLimit)),
-            tx.object(SUI_CLOCK_ID),
-          ],
-        });
+        if (hasDownstream) {
+          const zeroA = tx.moveCall({
+            target: '0x2::coin::zero',
+            typeArguments: [poolTypes.coinTypeA],
+            arguments: [],
+          });
+          const zeroB = tx.moveCall({
+            target: '0x2::coin::zero',
+            typeArguments: [poolTypes.coinTypeB],
+            arguments: [],
+          });
 
-        nodeOutputs[node.id] = result;
+          const [coinAIn, coinBIn] = swap.a2b
+            ? [coinInputArg, zeroB]
+            : [zeroA, coinInputArg];
+
+          const [outA, outB] = tx.moveCall({
+            target: `${CETUS.integratePackageId}::router::swap`,
+            typeArguments: swap.typeArguments,
+            arguments: [
+              tx.object(CETUS.globalConfigId),
+              tx.object(poolId),
+              coinAIn,
+              coinBIn,
+              tx.pure.bool(swap.a2b),
+              tx.pure.bool(node.config?.by_amount_in ?? true),
+              tx.pure.u64(amountIn),
+              tx.pure.u128(BigInt(node.config?.sqrt_price_limit ?? swap.sqrtPriceLimit)),
+              tx.pure.bool(false),
+              tx.object(SUI_CLOCK_ID),
+            ],
+          });
+
+          nodeOutputs[node.id] = swap.a2b ? outB : outA;
+        } else {
+          const coinVec = tx.makeMoveVec({ elements: [coinInputArg] });
+          tx.moveCall({
+            target: `${CETUS.integratePackageId}::pool_script::${swap.a2b ? 'swap_a2b' : 'swap_b2a'}`,
+            typeArguments: swap.typeArguments,
+            arguments: [
+              tx.object(CETUS.globalConfigId),
+              tx.object(poolId),
+              coinVec,
+              tx.pure.bool(node.config?.by_amount_in ?? true),
+              tx.pure.u64(amountIn),
+              tx.pure.u64(minAmountOut),
+              tx.pure.u128(BigInt(node.config?.sqrt_price_limit ?? swap.sqrtPriceLimit)),
+              tx.object(SUI_CLOCK_ID),
+            ],
+          });
+
+          warnings.push(
+            'Cetus pool_script swap returns void — wire an edge to the next node to use router::swap with coin output.',
+          );
+        }
       } else if (node.type === 'haedal_stake') {
         const amount = BigInt(node.inputs?.amount ?? node.config?.amount ?? 0);
 

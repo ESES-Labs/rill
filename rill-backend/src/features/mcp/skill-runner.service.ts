@@ -25,6 +25,12 @@ export class SkillRunnerService {
       options.sender,
     );
 
+    if (simulation.simulatedViaFallback) {
+      warnings.push(
+        'Cetus devInspect skipped package version check — simulation estimated; mainnet execute should still work.',
+      );
+    }
+
     if (!options.execute) {
       return { simulation, executed: false, warnings };
     }

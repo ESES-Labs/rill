@@ -32,7 +32,7 @@ export interface ResolvedManifest {
 
 const CURATED_MANIFESTS: Record<string, ResolvedManifest> = {
   'cetus_swap': {
-    packageId: CETUS.scriptPackageId,
+    packageId: CETUS.integratePackageId,
     module: 'pool_script',
     functionName: 'swap_a2b',
     packageVersion: '1',

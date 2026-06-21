@@ -2,9 +2,13 @@
 
 const MAINNET = {
   cetus: {
+    /** Cetus integrate package — pool_script + router */
+    integratePackageId: '0x996c4d9480708fb8b92aa7acf819fb0497b5ec8e65ba06601cae2fb6db3312c3',
+    /** @deprecated legacy script package — devInspect version-check fails; use integrate */
     scriptPackageId: '0x3a5aa90ffa33d09100d7b6941ea1c0ffe6ab66e77062ddd26320c1b073aabb10',
     clmmPackageId: '0x1eabed72c53feb3805120a081dc15963c204dc8d091542592abaf7a35689b2fb',
     globalConfigId: '0xdaa46292632c3c4d8f31f23ea0f9b36a28ff3677e9684980e4438403a67a3d8f',
+    /** USDC/SUI mainnet pool */
     defaultPoolId: '0xb8d7d9e66a60c239e7a60110efcf8de6c705580ed924d0dde141f4a0e2c90105',
     defaultInputCoinType: '0x2::sui::SUI',
     defaultCoinTypeA: '0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7::usdc::USDC',

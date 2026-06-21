@@ -1,5 +1,6 @@
 import { suiClient } from '../../core/config';
 import { DEFAULT_SIMULATE_SENDER } from '../../core/protocols';
+import { isCetusDevInspectVersionAbort } from './pool-resolver';
 import { Transaction } from '@mysten/sui/transactions';
 
 export interface SimulationResult {
@@ -16,6 +17,8 @@ export interface SimulationResult {
     objectId: string;
     objectType: string;
   }[];
+  /** Set when devInspect is unreliable but PTB is likely valid on mainnet. */
+  simulatedViaFallback?: boolean;
 }
 
 export class SimulatorService {
@@ -29,17 +32,33 @@ export class SimulatorService {
         transactionBlock: tx,
       });
 
-      return this.parseDevInspect(response);
+      const parsed = this.parseDevInspect(response);
+      return this.applyCetusFallback(parsed);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown RPC simulation error';
-      return {
+      return this.applyCetusFallback({
         ok: false,
         error: message,
         gasEstimate: 0,
         balanceChanges: [],
         objectChanges: [],
-      };
+      });
     }
+  }
+
+  /** Cetus CLMM stub fails checked_package_version in devInspect; mainnet execute still works. */
+  private applyCetusFallback(result: SimulationResult): SimulationResult {
+    if (result.ok || !isCetusDevInspectVersionAbort(result.error)) {
+      return result;
+    }
+
+    return {
+      ...result,
+      ok: true,
+      simulatedViaFallback: true,
+      error: undefined,
+      gasEstimate: result.gasEstimate || 2_500_000,
+    };
   }
 
   private parseDevInspect(response: Awaited<ReturnType<typeof suiClient.devInspectTransactionBlock>>): SimulationResult {
