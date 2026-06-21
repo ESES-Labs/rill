@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { ConnectButton } from "@mysten/dapp-kit";
+import { RillMark } from "@/components/rill-mark";
 
 export function SiteHeader() {
   return (
@@ -12,12 +13,9 @@ export function SiteHeader() {
             initial={{ rotate: -8, scale: 0.9 }}
             animate={{ rotate: 0, scale: 1 }}
             transition={{ type: "spring", stiffness: 200, damping: 14 }}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-foreground text-background"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M4 12c0-4 4-7 8-7s8 3 8 7-4 7-8 7" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-              <circle cx="12" cy="12" r="2" fill="currentColor" />
-            </svg>
+            <RillMark className="h-4 w-4" />
           </motion.span>
           <span className="font-display text-xl tracking-tight">Rill</span>
           <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground bg-muted px-1.5 py-0.5 rounded">

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { X, Package, Sparkles, Loader2, ChevronRight, AlertCircle } from "lucide-react";
+import { X, Package, ScanSearch, Loader2, ChevronRight, AlertCircle } from "lucide-react";
 import { rillApi } from "@/lib/rill-api";
 import {
   backendFunctionsToDiscovered,
@@ -81,7 +81,7 @@ export function DiscoverDialog({
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div>
             <div className="text-xs uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
-              <Sparkles className="h-3 w-3" /> On-chain introspection
+              <ScanSearch className="h-3 w-3" /> On-chain introspection
             </div>
             <h3 className="font-display text-2xl tracking-tight">Discover a Sui protocol</h3>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -110,7 +110,7 @@ export function DiscoverDialog({
               disabled={loading || !pkg.trim()}
               className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-foreground text-background px-4 py-2 text-sm font-medium hover:opacity-90 transition disabled:cursor-not-allowed disabled:opacity-60 whitespace-nowrap"
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanSearch className="h-4 w-4" />}
               {loading ? "Reading ABI…" : "Introspect"}
             </button>
           </div>

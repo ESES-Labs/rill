@@ -1,82 +1,76 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { Handle, Position, useUpdateNodeInternals, type HandleType } from "reactflow";
+import { type ReactNode } from "react";
+import { Handle, Position, type HandleType } from "reactflow";
+import { cn } from "@/lib/utils";
 
-type HandleProps = {
-  id: string;
-  nodeId: string;
-  type: HandleType;
-  position: Position;
-  alignRef: React.RefObject<HTMLElement | null>;
-};
-
-/** Handle snapped to the vertical center of `alignRef`. Hidden until measured. */
-export function AlignedHandle({ id, nodeId, type, position, alignRef }: HandleProps) {
-  const [top, setTop] = useState<number | null>(null);
-  const updateNodeInternals = useUpdateNodeInternals();
-
-  useLayoutEffect(() => {
-    const row = alignRef.current;
-    if (!row) return;
-
-    const compute = () => {
-      const node = row.closest(".react-flow__node");
-      if (!node) return;
-      const nodeRect = node.getBoundingClientRect();
-      const rowRect = row.getBoundingClientRect();
-      setTop(rowRect.top - nodeRect.top + rowRect.height / 2);
-      updateNodeInternals(nodeId);
-    };
-
-    compute();
-    const ro = new ResizeObserver(compute);
-    ro.observe(row);
-    const node = row.closest(".react-flow__node");
-    if (node) ro.observe(node);
-    return () => ro.disconnect();
-  }, [alignRef, nodeId, updateNodeInternals]);
-
-  if (top === null) return null;
-
-  const side = position === Position.Left ? { left: -8 } : { right: -8 };
-
-  return (
-    <Handle id={id} type={type} position={position} className="flow-handle" style={{ top, ...side }} />
-  );
-}
-
-type WireRowProps = {
-  nodeId: string;
+type PortRowProps = {
   handleId: string;
   handleType: HandleType;
-  handlePosition: Position;
+  side: "left" | "right";
+  tone?: "flow" | "coin-in" | "coin-out";
   className?: string;
   children: ReactNode;
 };
 
-/** Dashed wire row with handle anchored to the row center. */
-export function WireRow({
-  nodeId,
+/** Full-bleed wire row with an inline handle — edges snap to the visible circle. */
+export function PortRow({
   handleId,
   handleType,
-  handlePosition,
-  className = "",
+  side,
+  tone = "flow",
+  className,
   children,
-}: WireRowProps) {
-  const rowRef = useRef<HTMLDivElement>(null);
+}: PortRowProps) {
+  const toneCls =
+    tone === "coin-out"
+      ? "border-peach/45 bg-peach/10"
+      : tone === "coin-in"
+        ? "border-mint/45 bg-mint/10"
+        : "border-border/55 bg-muted/25";
 
   return (
     <div
-      ref={rowRef}
-      className={`relative flex items-center gap-2 rounded-lg border border-dashed px-2.5 py-2 ${className}`}
+      className={cn(
+        "flex min-h-[38px] items-center gap-2 border-t border-dashed px-2 py-2.5 text-[10px]",
+        toneCls,
+        className,
+      )}
     >
-      {children}
-      <AlignedHandle
-        id={handleId}
-        nodeId={nodeId}
-        type={handleType}
-        position={handlePosition}
-        alignRef={rowRef}
-      />
+      {side === "left" && (
+        <Handle
+          id={handleId}
+          type={handleType}
+          position={Position.Left}
+          className="flow-handle-port flow-handle-inline shrink-0"
+        />
+      )}
+      <div className="flex min-w-0 flex-1 items-center gap-2">{children}</div>
+      {side === "right" && (
+        <Handle
+          id={handleId}
+          type={handleType}
+          position={Position.Right}
+          className="flow-handle-port flow-handle-inline shrink-0"
+        />
+      )}
     </div>
+  );
+}
+
+type InlineHandleProps = {
+  id: string;
+  type: HandleType;
+  position: Position;
+  className?: string;
+};
+
+/** Small inline handle for port grid rows (discovered ABI nodes). */
+export function InlineHandle({ id, type, position, className }: InlineHandleProps) {
+  return (
+    <Handle
+      id={id}
+      type={type}
+      position={position}
+      className={cn("flow-handle-port flow-handle-inline shrink-0", className)}
+    />
   );
 }

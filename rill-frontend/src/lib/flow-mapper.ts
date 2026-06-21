@@ -1,7 +1,12 @@
 import type { Edge, Node } from "reactflow";
 import type { ActionNodeData } from "@/components/flow/nodes";
 import type { FlowEdge, FlowGraph, FlowNode } from "@/lib/rill-api";
-import { buildCetusSwapFlowConfig, buildHaedalStakeFlowConfig, buildDeepbookOrderFlowConfig, TOKEN_COIN_TYPE } from "@/lib/action-config";
+import {
+  buildCetusSwapFlowConfig,
+  buildHaedalStakeFlowConfig,
+  buildDeepbookOrderFlowConfig,
+  TOKEN_COIN_TYPE,
+} from "@/lib/action-config";
 
 const SUI = TOKEN_COIN_TYPE.SUI;
 

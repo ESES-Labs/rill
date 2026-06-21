@@ -22,7 +22,7 @@ import {
   Play,
   ChevronRight,
   X,
-  Sparkles,
+  ScanSearch,
   Shield,
   Layers,
   Check,
@@ -308,9 +308,9 @@ function Builder() {
               {network ? `Live on ${network}` : "Live on Sui"}
             </h2>
             <p className="mt-2 text-[11px] text-muted-foreground leading-relaxed">
-              1. Drag Cetus / Haedal onto canvas
+              1. Drag actions onto canvas
               <br />
-              2. <strong>Trigger → Cetus</strong> (flow, dashed) · <strong>coin_out → sui_coin</strong> (solid)
+              2. Wire <strong>flow</strong> (dashed) or <strong>coin</strong> ports (solid)
               <br />
               3. <strong>Simulate</strong> → <strong>Compile & export</strong>
             </p>
@@ -321,7 +321,7 @@ function Builder() {
               onClick={() => setDiscoverOpen(true)}
               className="mt-3 w-full inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-foreground text-background px-3 py-2 text-sm font-medium shadow-[var(--shadow-soft)]"
             >
-              <Sparkles className="h-3.5 w-3.5" /> Discover / Import
+              <ScanSearch className="h-3.5 w-3.5" /> Discover / Import
             </motion.button>
             <div className="mt-3 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

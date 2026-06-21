@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import ReactFlow, { Background, BackgroundVariant } from "reactflow";
-import { ArrowRight, Sparkles, Workflow, Code2, Bot, Terminal, Boxes } from "lucide-react";
+import { ArrowRight, Workflow, Code2, Terminal, Boxes, Plug } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { ActionNode, TriggerNode, OutputNode } from "@/components/flow/nodes";
 
@@ -84,7 +84,7 @@ function Landing() {
           transition={{ duration: 0.6 }}
           className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/60 backdrop-blur px-3 py-1 text-xs text-muted-foreground"
         >
-          <Sparkles className="h-3.5 w-3.5 text-primary" />
+          <Workflow className="h-3.5 w-3.5 text-primary" />
           Sui Overflow 2026 · Software for Agents
         </motion.div>
 
@@ -178,7 +178,7 @@ function Landing() {
           {[
             { icon: Boxes, color: "bg-mint text-mint-foreground", title: "Compose", body: "Pick protocol nodes — Cetus, Navi, Haedal, Pyth, SuiNS — and wire them on a canvas." },
             { icon: Workflow, color: "bg-peach text-peach-foreground", title: "Configure", body: "Set inputs, validation rules, and which steps the agent decides vs. you pin." },
-            { icon: Bot, color: "bg-lilac text-lilac-foreground", title: "Export", body: "Get an MCP server, an agent skill, or a CLI tool — ready to drop into Claude or any model." },
+            { icon: Plug, color: "bg-lilac text-lilac-foreground", title: "Export", body: "Get an MCP server, an agent skill, or a CLI tool — ready to drop into Claude or any model." },
           ].map((s, i) => (
             <motion.div
               key={s.title}
@@ -202,7 +202,7 @@ function Landing() {
       <section className="mx-auto max-w-6xl px-6 mt-24">
         <div className="grid md:grid-cols-3 gap-5">
           {[
-            { icon: Bot, label: "MCP Server", code: "Add the hosted MCP URL to Claude / Cursor / Thiny" },
+            { icon: Plug, label: "MCP Server", code: "Add the hosted MCP URL to Claude / Cursor / Thiny" },
             { icon: Terminal, label: "Simulate first", code: "POST /api/simulate → devInspect on Sui" },
             { icon: Code2, label: "Unsigned PTB", code: "returns a base64 PTB — Thiny / wallet signs" },
           ].map((e) => (

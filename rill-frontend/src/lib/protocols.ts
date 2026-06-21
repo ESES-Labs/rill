@@ -157,8 +157,7 @@ export const PROTOCOLS: Protocol[] = [
     tagline: "On-chain central limit order book",
     category: "DEX",
     color: "sky",
-    logoUrl:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSHPQ4VZxqTG1rkMr4buTO8Y0ZsGX87X8r2iWeSdHQ7OQ&s=10",
+    logoUrl: "https://s2.coinmarketcap.com/static/img/coins/200x200/33391.png",
     actions: [
       { id: "limit_order", name: "Place limit order", description: "Place a limit order on a DeepBook pool (needs a funded BalanceManager).", inputs: [
         { key: "poolKey", label: "Pool", type: "string" },
