@@ -12,6 +12,10 @@ services:
       - "traefik.http.routers.rill-backend.entrypoints=websecure"
       - "traefik.http.routers.rill-backend.tls.certresolver=letsencrypt"
       - "traefik.http.services.rill-backend.loadbalancer.server.port=3002"
+      # Edge rate limiting (per source IP) — the right layer for a public API; protects the Sui RPC calls.
+      - "traefik.http.middlewares.rill-ratelimit.ratelimit.average=30"
+      - "traefik.http.middlewares.rill-ratelimit.ratelimit.burst=60"
+      - "traefik.http.routers.rill-backend.middlewares=rill-ratelimit"
     env_file:
       - ./rill-backend/.env
     environment:
