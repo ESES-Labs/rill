@@ -18,7 +18,7 @@ export class IntrospectService {
         
         for (const [functionName, functionDef] of Object.entries(moduleDef.exposedFunctions) as [string, any][]) {
           // We only expose public or entry functions to the UI/agent
-          if (!functionDef.isEntry && functionDef.visibility !== 'public') {
+          if (!functionDef.isEntry && functionDef.visibility?.toLowerCase() !== 'public') {
             continue;
           }
 

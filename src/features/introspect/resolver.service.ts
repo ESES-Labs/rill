@@ -220,6 +220,9 @@ const CURATED_MANIFESTS: Record<string, ResolvedManifest> = {
   }
 };
 
+import { suiClient } from '../../core/config';
+import { introspectService } from './introspect.service';
+
 export class ResolverService {
   /**
    * Resolves semantics for a single function in a package.
@@ -249,34 +252,157 @@ export class ResolverService {
   private async resolveDynamic(packageId: string, moduleName: string, functionName: string): Promise<ResolvedManifest> {
     const resolvedAt = new Date().toISOString();
     
-    const parameters: ResolvedParameter[] = [
-      {
-        index: 0,
-        name: 'clock',
-        moveType: '0x2::clock::Clock',
-        class: 'system',
-        role: 'clock',
-        boundType: 'none',
-        boundOf: null,
-        exposure: 'auto',
-        default: '0x6',
-        confidence: 0.9,
-        provenance: 'type'
-      },
-      {
-        index: 1,
-        name: 'ctx',
-        moveType: '&mut 0x2::tx_context::TxContext',
-        class: 'system',
-        role: 'tx_context',
-        boundType: 'none',
-        boundOf: null,
-        exposure: 'auto',
-        default: null,
-        confidence: 1.0,
-        provenance: 'type'
+    // 1. Introspect package to get function signature
+    const discoveredFunctions = await introspectService.introspectPackage(packageId);
+    const func = discoveredFunctions.find(
+      f => f.module === moduleName && f.name === functionName
+    );
+
+    if (!func) {
+      throw new Error(`Function ${moduleName}::${functionName} not found in package ${packageId}`);
+    }
+
+    // 2. Query historical transactions for event-matching
+    const matches: Record<number, Record<string, number>> = {};
+    const emits = new Set<string>();
+    let processedTxCount = 0;
+    const sampleSize = 10;
+
+    const isSameAddress = (addr1: string, addr2: string) => {
+      const clean = (addr: string) => addr.toLowerCase().replace(/^0x/, '').padStart(64, '0');
+      return clean(addr1) === clean(addr2);
+    };
+
+    try {
+      const txBlocks = await suiClient.queryTransactionBlocks({
+        filter: {
+          MoveFunction: {
+            package: packageId,
+            module: moduleName,
+            function: functionName
+          }
+        },
+        options: {
+          showInput: true,
+          showEvents: true
+        },
+        limit: sampleSize
+      });
+
+      for (const txBlock of txBlocks.data) {
+        const txData = (txBlock as any).transaction?.data?.transaction;
+        if (!txData) continue;
+
+        const inputs = txData.inputs || [];
+        const transactions = txData.transactions || [];
+
+        // Find the MoveCall matching our target
+        const moveCall = transactions.find((t: any) => {
+          if (!t.MoveCall) return false;
+          const mc = t.MoveCall;
+          return isSameAddress(mc.package, packageId) && 
+                 mc.module === moduleName && 
+                 mc.function === functionName;
+        });
+
+        if (!moveCall) continue;
+        processedTxCount++;
+
+        // Collect event types
+        const events = txBlock.events || [];
+        for (const event of events) {
+          emits.add(event.type);
+        }
+
+        // Map parameter indices to input values
+        const moveCallArgs = moveCall.MoveCall.arguments || [];
+        const paramIndexToValue: Record<number, any> = {};
+
+        for (let i = 0; i < moveCallArgs.length; i++) {
+          const arg = moveCallArgs[i];
+          if (arg.Input !== undefined) {
+            const inputVal = inputs[arg.Input];
+            if (inputVal && inputVal.type === 'pure') {
+              paramIndexToValue[i] = inputVal.value;
+            }
+          }
+        }
+
+        // Match param values against event fields
+        for (const [paramIdxStr, paramVal] of Object.entries(paramIndexToValue)) {
+          const paramIdx = parseInt(paramIdxStr, 10);
+          if (!matches[paramIdx]) matches[paramIdx] = {};
+
+          for (const event of events) {
+            const parsedJson = event.parsedJson || {};
+            for (const [fieldName, fieldVal] of Object.entries(parsedJson)) {
+              if (String(paramVal) === String(fieldVal)) {
+                matches[paramIdx][fieldName] = (matches[paramIdx][fieldName] || 0) + 1;
+              }
+            }
+          }
+        }
       }
-    ];
+    } catch (e: any) {
+      console.warn(`Querying transaction history failed for resolver: ${e.message}. Degrading gracefully.`);
+    }
+
+    // 3. Construct resolved parameters list
+    const parameters: ResolvedParameter[] = func.parameters.map((param) => {
+      let resolvedRole: string | null = null;
+      let resolvedName: string | null = null;
+      let confidence = 0.5;
+      let provenance: ResolvedParameter['provenance'] = 'type';
+      let exposure: ResolvedParameter['exposure'] = 'agent_input';
+
+      if (param.class === 'system') {
+        resolvedName = param.moveType.includes('Clock') ? 'clock' : 'ctx';
+        resolvedRole = param.moveType.includes('Clock') ? 'clock' : 'tx_context';
+        confidence = 1.0;
+        exposure = 'auto';
+      } else if (param.class === 'pure' && matches[param.index] && processedTxCount > 0) {
+        // Find matched event field with highest frequency
+        const sortedMatches = Object.entries(matches[param.index]).sort((a, b) => b[1] - a[1]);
+        if (sortedMatches.length > 0) {
+          const [fieldName, frequency] = sortedMatches[0];
+          resolvedName = fieldName;
+          resolvedRole = fieldName;
+          confidence = frequency / processedTxCount;
+          provenance = 'event';
+        }
+      }
+
+      if (!resolvedName) {
+        resolvedName = param.class === 'coin' ? 'coin_inputs' : `arg${param.index}`;
+      }
+
+      return {
+        ...param,
+        name: resolvedName,
+        role: resolvedRole,
+        boundType: 'none',
+        boundOf: null,
+        exposure: exposure,
+        default: param.class === 'system' && resolvedName === 'clock' ? '0x6' : null,
+        confidence,
+        provenance
+      };
+    });
+
+    // 4. Analyze touched resources
+    const coinTypes: string[] = [];
+    const sharedObjects: string[] = [];
+
+    for (const param of parameters) {
+      if (param.class === 'coin' && param.moveType.includes('<')) {
+        const coinType = param.moveType.match(/<(.*)>/)?.[1] || '';
+        if (coinType) coinTypes.push(coinType);
+      } else if (param.class === 'object') {
+        sharedObjects.push(param.moveType.split('<')[0]);
+      }
+    }
+
+    const minConfidence = parameters.reduce((min, p) => Math.min(min, p.confidence), 1.0);
 
     return {
       packageId,
@@ -284,16 +410,16 @@ export class ResolverService {
       functionName,
       packageVersion: '1',
       resolvedAt,
-      typeParameters: [],
+      typeParameters: func.typeParameters,
       parameters,
-      emits: [],
+      emits: Array.from(emits),
       touches: {
-        coinTypes: [],
-        sharedObjects: []
+        coinTypes,
+        sharedObjects
       },
       safety: {
-        spendingLimitDefault: null,
-        requiresConfirmation: true
+        spendingLimitDefault: coinTypes.length > 0 ? 1000000000 : null, // 1 SUI limit by default if coins are touched
+        requiresConfirmation: minConfidence < 0.8
       }
     };
   }
