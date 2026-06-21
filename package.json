@@ -1,9 +1,10 @@
 {
   "name": "rill",
   "private": true,
-  "workspaces": ["rill-backend", "packages/*"],
+  "workspaces": ["rill-backend", "rill-frontend", "packages/*"],
   "scripts": {
     "dev:backend": "bun run --filter rill-backend dev",
+    "dev:frontend": "bun run --filter rill-frontend dev",
     "build:sdk": "bun run --filter @rill/sdk build",
     "check:sdk": "bun run --filter @rill/sdk check"
   }
