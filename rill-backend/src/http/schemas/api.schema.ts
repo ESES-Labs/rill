@@ -24,11 +24,20 @@ export const FlowNodeSchema = z.object({
   inputs: z.record(z.string(), z.any()).optional(),
 });
 
+export const AgentWalletSchema = z.object({
+  packageId: z.string().min(4),
+  walletId: z.string().min(4),
+  capId: z.string().min(4),
+  coinType: z.string().optional(),
+});
+
 export const CompileSchema = z.object({
   flow: z.object({
     nodes: z.array(FlowNodeSchema),
     edges: z.array(FlowEdgeSchema),
   }),
+  sender: z.string().optional(),
+  agentWallet: AgentWalletSchema.optional(),
 });
 
 export const SimulateSchema = z.object({
@@ -36,6 +45,8 @@ export const SimulateSchema = z.object({
     nodes: z.array(FlowNodeSchema),
     edges: z.array(FlowEdgeSchema),
   }),
+  sender: z.string().optional(),
+  agentWallet: AgentWalletSchema.optional(),
 });
 
 export const PublishSchema = z.object({
@@ -55,6 +66,9 @@ export const ExecuteSchema = z.object({
     .optional(),
   skillId: z.string().optional(),
   params: z.record(z.string(), z.any()).optional(),
+  sender: z.string().optional(),
+  agentWallet: AgentWalletSchema.optional(),
+  /** Dev only — requires DEV_SIGN_ENABLED + executor key on server. Default: return unsigned PTB. */
   execute: z.boolean().optional(),
   forceExecute: z.boolean().optional(),
 });

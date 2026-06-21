@@ -1,15 +1,17 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
+import { config } from '../../core/config';
 import { introspectService } from '../../features/introspect/introspect.service';
 import { resolverService } from '../../features/introspect/resolver.service';
 import { compilerService } from '../../features/compiler/compiler.service';
+import { previewService } from '../../features/compiler/preview.service';
+import { serializeUnsignedPtb } from '../../features/compiler/ptb.util';
 import { simulatorService } from '../../features/compiler/simulator.service';
 import { skillsStore } from '../../features/mcp/skills.store';
 import { skillRunnerService } from '../../features/mcp/skill-runner.service';
 import { buildToolDefs } from '../../features/mcp/tool-schema';
 import { handleMcpJsonRpc } from '../../features/mcp/mcp.service';
 import { walrusAuditService } from '../../features/walrus/audit.service';
-import { config } from '../../core/config';
 import {
   IntrospectSchema,
   ResolveSchema,
@@ -20,6 +22,18 @@ import {
 } from '../schemas/api.schema';
 
 export const apiRouter = new Hono();
+
+function resolveAgentWallet(body: { agentWallet?: { packageId: string; walletId: string; capId: string; coinType?: string } }) {
+  if (body.agentWallet) {
+    return {
+      packageId: body.agentWallet.packageId,
+      walletId: body.agentWallet.walletId,
+      capId: body.agentWallet.capId,
+      coinType: body.agentWallet.coinType ?? '0x2::sui::SUI',
+    };
+  }
+  return config.agentWallet;
+}
 
 apiRouter.post('/introspect', zValidator('json', IntrospectSchema), async (c) => {
   const { packageId } = c.req.valid('json');
@@ -34,24 +48,50 @@ apiRouter.post('/resolve', zValidator('json', ResolveSchema), async (c) => {
 });
 
 apiRouter.post('/compile', zValidator('json', CompileSchema), async (c) => {
-  const { flow } = c.req.valid('json');
-  const { transaction, warnings } = await compilerService.compileFlow(flow);
-  const serializedTx = transaction.serialize();
+  const body = c.req.valid('json');
+  const compileResult = await compilerService.compileFlow(body.flow, {
+    sender: body.sender,
+    agentWallet: resolveAgentWallet(body),
+  });
+
+  const preview = previewService.buildPreview(body.flow, compileResult.warnings);
+  const unsignedPtb = serializeUnsignedPtb(compileResult.transaction);
 
   return c.json({
     success: true,
-    data: { txBytes: serializedTx, warnings },
+    data: {
+      unsignedPtb,
+      preview,
+      warnings: compileResult.warnings,
+      agentWalletBound: compileResult.agentWalletBound,
+      budgetSpendMist: compileResult.budgetSpendMist.toString(),
+    },
   });
 });
 
 apiRouter.post('/simulate', zValidator('json', SimulateSchema), async (c) => {
-  const { flow } = c.req.valid('json');
-  const { transaction, warnings } = await compilerService.compileFlow(flow);
-  const simulation = await simulatorService.simulateTransaction(transaction);
+  const body = c.req.valid('json');
+  const compileResult = await compilerService.compileFlow(body.flow, {
+    sender: body.sender,
+    agentWallet: resolveAgentWallet(body),
+  });
+
+  const simulation = await simulatorService.simulateTransaction(
+    compileResult.transaction,
+    body.sender,
+  );
+  const preview = previewService.buildPreview(body.flow, compileResult.warnings);
+  const unsignedPtb = serializeUnsignedPtb(compileResult.transaction);
 
   return c.json({
     success: true,
-    data: { simulation, warnings },
+    data: {
+      unsignedPtb,
+      preview,
+      simulation,
+      warnings: compileResult.warnings,
+      agentWalletBound: compileResult.agentWalletBound,
+    },
   });
 });
 
@@ -92,7 +132,8 @@ apiRouter.get('/skills', (c) => {
 });
 
 apiRouter.post('/execute', zValidator('json', ExecuteSchema), async (c) => {
-  const { flow, params, skillId, execute, forceExecute } = c.req.valid('json');
+  const body = c.req.valid('json');
+  const { flow, params, skillId, execute, forceExecute, sender, agentWallet } = body;
 
   const targetFlow =
     skillId && skillsStore.get(skillId) ? skillsStore.get(skillId)!.flow : flow;
@@ -104,6 +145,15 @@ apiRouter.post('/execute', zValidator('json', ExecuteSchema), async (c) => {
   const result = await skillRunnerService.runFlow(targetFlow, params ?? {}, {
     execute: execute ?? false,
     forceExecute: forceExecute ?? false,
+    sender,
+    agentWallet: agentWallet
+      ? {
+          packageId: agentWallet.packageId,
+          walletId: agentWallet.walletId,
+          capId: agentWallet.capId,
+          coinType: agentWallet.coinType ?? '0x2::sui::SUI',
+        }
+      : config.agentWallet,
   });
 
   return c.json({ success: true, data: result });

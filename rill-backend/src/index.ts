@@ -30,8 +30,12 @@ app.get('/health', (c) =>
     network: config.network,
     apiBase: `${config.publicBaseUrl}/api`,
     docs: config.publicBaseUrl,
+    keyless: !config.devSignEnabled,
+    devSignEnabled: config.devSignEnabled,
+    agentWalletConfigured: Boolean(config.agentWallet),
     walrus: config.walrusEnabled,
-    description: 'Autonomous Move package semantic resolver and visual flow compilation engine for Sui.',
+    description:
+      'Keyless Move flow compiler for Sui — builds unsigned PTBs, simulates, and serves MCP tools. Thiny signs.',
   }),
 );
 

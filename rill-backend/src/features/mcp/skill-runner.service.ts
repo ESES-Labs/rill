@@ -1,8 +1,14 @@
-import { Transaction } from '@mysten/sui/transactions';
-import { suiClient } from '../../core/config';
-import { loadExecutorKeypair } from './sui-signer';
-import { compilerService, FlowGraph } from '../compiler/compiler.service';
-import { simulatorService, SimulationResult } from '../compiler/simulator.service';
+import { config } from '../../core/config';
+import { loadAgentWalletFromEnv, type AgentWalletBinding } from '../../core/agent-wallet';
+import {
+  compilerService,
+  type FlowGraph,
+  type CompileOptions,
+} from '../compiler/compiler.service';
+import { previewService } from '../compiler/preview.service';
+import { serializeUnsignedPtb } from '../compiler/ptb.util';
+import { simulatorService, type SimulationResult } from '../compiler/simulator.service';
+import { canExecuteOnChain, loadExecutorKeypair } from './sui-signer';
 import {
   walrusAuditService,
   type AuditRecord,
@@ -10,25 +16,43 @@ import {
 } from '../walrus/audit.service';
 
 export interface SkillRunResult {
+  unsignedPtb: string;
+  preview: string;
   simulation: SimulationResult;
   executed: boolean;
   digest?: string;
   warnings: string[];
+  agentWalletBound: boolean;
+  /** Backend is keyless — client (Thiny / wallet) must sign unsignedPtb. */
+  signable: true;
+  devSignAvailable: boolean;
   walrus?: WalrusAuditRef;
+}
+
+export interface RunFlowOptions {
+  execute?: boolean;
+  sender?: string;
+  forceExecute?: boolean;
+  agentWallet?: AgentWalletBinding;
 }
 
 export class SkillRunnerService {
   async runFlow(
     flow: FlowGraph,
     params: Record<string, unknown>,
-    options: { execute?: boolean; sender?: string; forceExecute?: boolean } = {},
+    options: RunFlowOptions = {},
   ): Promise<SkillRunResult> {
     const hydratedFlow = this.applyParams(flow, params);
-    const { transaction, warnings } = await compilerService.compileFlow(hydratedFlow);
+    const compileOpts = this.resolveCompileOptions(options);
+    const { transaction, warnings, agentWalletBound } =
+      await compilerService.compileFlow(hydratedFlow, compileOpts);
+
+    const preview = previewService.buildPreview(hydratedFlow, warnings);
+    const unsignedPtb = serializeUnsignedPtb(transaction);
 
     const simulation = await simulatorService.simulateTransaction(
       transaction,
-      options.sender,
+      compileOpts.sender,
     );
 
     if (simulation.simulatedViaFallback) {
@@ -37,11 +61,30 @@ export class SkillRunnerService {
       );
     }
 
-    if (!options.execute) {
+    const devSignAvailable = config.devSignEnabled && canExecuteOnChain();
+    const wantsExecute = options.execute === true;
+
+    if (!wantsExecute) {
       return this.finalizeResult(
-        { simulation, executed: false, warnings },
+        {
+          unsignedPtb,
+          preview,
+          simulation,
+          executed: false,
+          warnings,
+          agentWalletBound,
+          signable: true,
+          devSignAvailable,
+        },
         hydratedFlow,
         params,
+        devSignAvailable,
+      );
+    }
+
+    if (!devSignAvailable) {
+      throw new Error(
+        'Server-side signing is disabled (keyless mode). Sign unsignedPtb locally via Thiny or set DEV_SIGN_ENABLED=true for dev only.',
       );
     }
 
@@ -49,19 +92,47 @@ export class SkillRunnerService {
       throw new Error(`Simulation failed: ${simulation.error ?? 'unknown error'}`);
     }
 
-    const digest = await this.executeTransaction(transaction, options.sender);
+    const digest = await this.executeTransaction(transaction, compileOpts.sender);
     return this.finalizeResult(
-      { simulation, executed: true, digest, warnings },
+      {
+        unsignedPtb,
+        preview,
+        simulation,
+        executed: true,
+        digest,
+        warnings,
+        agentWalletBound,
+        signable: true,
+        devSignAvailable,
+      },
       hydratedFlow,
       params,
+      devSignAvailable,
     );
   }
 
+  private resolveCompileOptions(options: RunFlowOptions): CompileOptions {
+    const agentWallet = options.agentWallet ?? loadAgentWalletFromEnv();
+    const sender =
+      options.sender ??
+      process.env.SIMULATE_SENDER ??
+      (canExecuteOnChain() && config.devSignEnabled
+        ? loadExecutorKeypair().getPublicKey().toSuiAddress()
+        : undefined);
+
+    return { sender, agentWallet };
+  }
+
   private async finalizeResult(
-    result: Omit<SkillRunResult, 'walrus'>,
+    result: SkillRunResult,
     flow: FlowGraph,
     params: Record<string, unknown>,
+    allowWalrus: boolean,
   ): Promise<SkillRunResult> {
+    if (!allowWalrus || !config.walrusEnabled) {
+      return result;
+    }
+
     const audit: AuditRecord = {
       version: '1',
       service: 'rill',
@@ -76,9 +147,9 @@ export class SkillRunnerService {
     };
 
     const walrus = await walrusAuditService.storeAuditTrail(audit);
-    if (walrusAuditService.isEnabled() && !walrus) {
+    if (!walrus) {
       result.warnings.push(
-        'Walrus audit upload skipped or failed — check WALRUS_ENABLED and executor wallet (SUI + WAL on testnet).',
+        'Walrus audit upload skipped or failed — enable DEV_SIGN + WALRUS for server uploads, or audit via Thiny.',
       );
     }
 
@@ -108,12 +179,12 @@ export class SkillRunnerService {
     };
   }
 
-  private async executeTransaction(tx: Transaction, sender?: string): Promise<string> {
+  private async executeTransaction(tx: import('@mysten/sui/transactions').Transaction, sender?: string): Promise<string> {
     const keypair = loadExecutorKeypair();
-
     const address = sender ?? keypair.getPublicKey().toSuiAddress();
     tx.setSender(address);
 
+    const { suiClient } = await import('../../core/config');
     const result = await suiClient.signAndExecuteTransaction({
       signer: keypair,
       transaction: tx,

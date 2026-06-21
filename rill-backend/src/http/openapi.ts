@@ -81,7 +81,7 @@ export function buildOpenApiDocument(publicBaseUrl: string) {
       title: 'Rill API',
       version: '1.0.0',
       description:
-        'Autonomous Move flow compiler for Sui — introspect packages, compile PTBs, simulate, publish MCP skills, and execute on-chain.',
+        'Keyless Move flow compiler for Sui — builds unsigned PTBs, simulates, and serves MCP tools. Thiny signs; agent_wallet enforces on-chain caps.',
     },
     servers: [{ url: apiBase, description: 'Current deployment' }],
     tags: [
@@ -160,7 +160,7 @@ export function buildOpenApiDocument(publicBaseUrl: string) {
       '/compile': {
         post: {
           tags: ['Compiler'],
-          summary: 'Compile a visual flow graph into PTB bytes',
+          summary: 'Compile a visual flow into an unsigned PTB + human preview',
           requestBody: {
             required: true,
             content: {
@@ -176,14 +176,17 @@ export function buildOpenApiDocument(publicBaseUrl: string) {
           },
           responses: {
             '200': {
-              description: 'Serialized transaction bytes',
+              description: 'Unsigned PTB (base64) + preview',
               content: {
                 'application/json': {
                   schema: successEnvelope({
                     type: 'object',
                     properties: {
-                      txBytes: { type: 'string', description: 'Base64 PTB bytes' },
+                      unsignedPtb: { type: 'string', description: 'Base64 unsigned PTB — sign via Thiny/wallet' },
+                      preview: { type: 'string' },
                       warnings: { type: 'array', items: { type: 'string' } },
+                      agentWalletBound: { type: 'boolean' },
+                      budgetSpendMist: { type: 'string' },
                     },
                   }),
                 },

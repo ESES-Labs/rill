@@ -1,5 +1,6 @@
 import { skillsStore, PublishedSkill } from './skills.store';
 import { skillRunnerService } from './skill-runner.service';
+import { config } from '../../core/config';
 import { canExecuteOnChain } from './sui-signer';
 
 /** JSON-RPC handler for MCP tools/list + tools/call (Claude Code / OpenCode compatible). */
@@ -22,7 +23,11 @@ export async function handleMcpJsonRpc(
       result: {
         protocolVersion: '2024-11-05',
         capabilities: { tools: {} },
-        serverInfo: { name: `rill-${skill.id}`, version: '1.0.0' },
+        serverInfo: {
+          name: `rill-${skill.id}`,
+          version: '1.0.0',
+          description: 'Keyless PTB builder — returns unsigned PTB + preview + simulation.',
+        },
       },
     };
   }
@@ -44,13 +49,23 @@ export async function handleMcpJsonRpc(
   if (method === 'tools/call') {
     const params = (body.params ?? {}) as { name?: string; arguments?: Record<string, unknown> };
     const args = { ...(params.arguments ?? {}) };
-    const shouldExecute = args.execute === true && canExecuteOnChain();
+    const wantsExecute = args.execute === true;
     delete args.execute;
+
+    const devSignAvailable = config.devSignEnabled && canExecuteOnChain();
+    const shouldExecute = wantsExecute && devSignAvailable;
 
     const result = await skillRunnerService.runFlow(skill.flow, args, {
       execute: shouldExecute,
       forceExecute: shouldExecute,
+      agentWallet: config.agentWallet,
     });
+
+    if (wantsExecute && !devSignAvailable) {
+      result.warnings.push(
+        'execute=true ignored — keyless mode. Sign result.unsignedPtb via Thiny (@thiny/plugin-sui).',
+      );
+    }
 
     return {
       jsonrpc: '2.0',
@@ -68,7 +83,7 @@ export async function handleMcpJsonRpc(
 function formatToolListing(skill: PublishedSkill) {
   return {
     name: skill.toolDefs.name,
-    description: skill.toolDefs.description,
+    description: `${skill.toolDefs.description} Returns unsigned PTB — sign locally (Thiny).`,
     inputSchema: skill.toolDefs.inputSchema,
   };
 }
