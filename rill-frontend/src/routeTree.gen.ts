@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProtocolsRouteImport } from './routes/protocols'
+import { Route as PitchRouteImport } from './routes/pitch'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as BuilderRouteImport } from './routes/builder'
 import { Route as IndexRouteImport } from './routes/index'
@@ -17,6 +18,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const ProtocolsRoute = ProtocolsRouteImport.update({
   id: '/protocols',
   path: '/protocols',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PitchRoute = PitchRouteImport.update({
+  id: '/pitch',
+  path: '/pitch',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocsRoute = DocsRouteImport.update({
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
   '/docs': typeof DocsRoute
+  '/pitch': typeof PitchRoute
   '/protocols': typeof ProtocolsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
   '/docs': typeof DocsRoute
+  '/pitch': typeof PitchRoute
   '/protocols': typeof ProtocolsRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,22 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
   '/docs': typeof DocsRoute
+  '/pitch': typeof PitchRoute
   '/protocols': typeof ProtocolsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/builder' | '/docs' | '/protocols'
+  fullPaths: '/' | '/builder' | '/docs' | '/pitch' | '/protocols'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/builder' | '/docs' | '/protocols'
-  id: '__root__' | '/' | '/builder' | '/docs' | '/protocols'
+  to: '/' | '/builder' | '/docs' | '/pitch' | '/protocols'
+  id: '__root__' | '/' | '/builder' | '/docs' | '/pitch' | '/protocols'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BuilderRoute: typeof BuilderRoute
   DocsRoute: typeof DocsRoute
+  PitchRoute: typeof PitchRoute
   ProtocolsRoute: typeof ProtocolsRoute
 }
 
@@ -76,6 +86,13 @@ declare module '@tanstack/react-router' {
       path: '/protocols'
       fullPath: '/protocols'
       preLoaderRoute: typeof ProtocolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pitch': {
+      id: '/pitch'
+      path: '/pitch'
+      fullPath: '/pitch'
+      preLoaderRoute: typeof PitchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/docs': {
@@ -106,6 +123,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BuilderRoute: BuilderRoute,
   DocsRoute: DocsRoute,
+  PitchRoute: PitchRoute,
   ProtocolsRoute: ProtocolsRoute,
 }
 export const routeTree = rootRouteImport

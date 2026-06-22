@@ -84,11 +84,13 @@ export function resolveHaedalStakeConfig(
 }
 
 export interface DeepbookOrderNodeConfig {
-  poolKey: string;
-  balanceManagerId: string;
+  /** Optional — when absent the order params aren't needed (the flow provisions a BalanceManager instead). */
+  poolKey?: string;
+  /** Optional — when absent, Rill provisions a BalanceManager (DeepBook account) in the PTB. */
+  balanceManagerId?: string;
   tradeCapId?: string;
-  price: number;
-  quantity: number;
+  price?: number;
+  quantity?: number;
   isBid: boolean;
   payWithDeep: boolean;
   clientOrderId: string;
@@ -96,30 +98,36 @@ export interface DeepbookOrderNodeConfig {
   depositSui: number;
 }
 
-/** Resolve DeepBook limit-order params — FE/agent supplies them; the BalanceManager is pre-funded (onboarding). */
+/**
+ * Resolve DeepBook limit-order params. Nothing is required at this layer — when `balanceManagerId` is
+ * absent the flow provisions a BalanceManager (and order params aren't needed); the adapter validates
+ * order params only on the order path. This keeps simulate/compile from erroring before onboarding.
+ */
 export function resolveDeepbookOrderConfig(
   node: { id: string; config?: Record<string, unknown>; inputs?: Record<string, unknown> },
 ): { config: DeepbookOrderNodeConfig; warnings: string[] } {
-  const warnings: string[] = [];
-  const req = (key: string): string => {
+  const str = (key: string): string | undefined => {
     const v = pick(node, key);
-    if (v == null || v === '') throw new Error(`Node ${node.id}: DeepBook config.${key} is required.`);
-    return String(v);
+    return v == null || v === '' ? undefined : String(v);
+  };
+  const num = (key: string): number | undefined => {
+    const v = pick(node, key);
+    return v == null || v === '' ? undefined : Number(v);
   };
 
   return {
     config: {
-      poolKey: req('poolKey'),
-      balanceManagerId: req('balanceManagerId'),
-      tradeCapId: (pick(node, 'tradeCapId') as string | undefined) || undefined,
-      price: Number(req('price')),
-      quantity: Number(req('quantity')),
+      poolKey: str('poolKey'),
+      balanceManagerId: str('balanceManagerId'),
+      tradeCapId: str('tradeCapId'),
+      price: num('price'),
+      quantity: num('quantity'),
       isBid: pick(node, 'isBid') === true || pick(node, 'isBid') === 'true',
       payWithDeep: pick(node, 'payWithDeep') === true || pick(node, 'payWithDeep') === 'true',
       clientOrderId: String(pick(node, 'clientOrderId') ?? '1'),
       depositSui: Number(pick(node, 'depositSui') ?? 0) || 0,
     },
-    warnings,
+    warnings: [],
   };
 }
 

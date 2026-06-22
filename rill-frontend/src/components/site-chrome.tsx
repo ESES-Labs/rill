@@ -29,6 +29,9 @@ export function SiteHeader() {
           <Link to="/docs" className="cursor-pointer px-3 py-1.5 rounded-md text-muted-foreground hover:text-foreground transition-colors">
             Docs
           </Link>
+          <Link to="/pitch" className="cursor-pointer px-3 py-1.5 rounded-md text-muted-foreground hover:text-foreground transition-colors">
+            Pitch
+          </Link>
           <Link
             to="/builder"
             className="ml-2 inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-foreground text-background px-3.5 py-1.5 text-sm font-medium hover:opacity-90 transition"

@@ -1,5 +1,6 @@
 import { Transaction } from '@mysten/sui/transactions';
 import { SUI_COIN_TYPE } from '../../core/agent-wallet';
+import { ValidationError } from '../../core/errors';
 import { SUI_CLOCK_ID } from '../../core/protocols';
 import { getAdapter } from '../protocols/registry';
 import type {
@@ -32,7 +33,7 @@ export class CompilerService {
 
     if (options.agentWallet && rootTotal > 0n) {
       if (options.agentWallet.coinType !== SUI_COIN_TYPE) {
-        throw new Error(
+        throw new ValidationError(
           `Agent wallet coin type ${options.agentWallet.coinType} is not supported for MVP (expected ${SUI_COIN_TYPE}).`,
         );
       }
@@ -113,7 +114,7 @@ export class CompilerService {
 
     const visit = (nodeId: string) => {
       if (temp.has(nodeId)) {
-        throw new Error('Cyclic dependency detected in flow wiring!');
+        throw new ValidationError('Cyclic dependency detected in flow wiring!');
       }
       if (!visited.has(nodeId)) {
         temp.add(nodeId);

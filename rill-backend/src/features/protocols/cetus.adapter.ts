@@ -1,9 +1,49 @@
+import type { Transaction } from '@mysten/sui/transactions';
 import { SUI_COIN_TYPE } from '../../core/agent-wallet';
 import { SUI_CLOCK_ID } from '../../core/protocols';
+import { suiClient } from '../../core/config';
 import { resolveCetusSwapConfig } from '../../core/node-config';
+import { ValidationError } from '../../core/errors';
 import { pickSwapFunction, resolvePoolTypeArgs } from '../compiler/pool-resolver';
 import { injectMinOutAssert } from './guard';
 import type { AdapterCtx, FlowGraph, FlowNode, ProtocolAdapter } from './types';
+
+/**
+ * Source an exact `amount` of a non-SUI coin from the sender's owned coins: gather coin objects of the
+ * type, merge them, and split the amount. Produces a plain PTB (no unresolved intents → serializes for
+ * keyless signing). Used for standalone swaps where the input token isn't SUI (e.g. USDC → SUI).
+ */
+async function sourceCoinFromSender(
+  tx: Transaction,
+  sender: string,
+  coinType: string,
+  amount: bigint,
+  nodeId: string,
+): Promise<unknown> {
+  const ids: string[] = [];
+  let total = 0n;
+  let cursor: string | null | undefined = undefined;
+  do {
+    const page = await suiClient.getCoins({ owner: sender, coinType, cursor: cursor ?? null });
+    for (const c of page.data) {
+      ids.push(c.coinObjectId);
+      total += BigInt(c.balance);
+      if (total >= amount) break;
+    }
+    cursor = total >= amount || !page.hasNextPage ? null : page.nextCursor;
+  } while (cursor);
+
+  if (ids.length === 0 || total < amount) {
+    throw new ValidationError(
+      `Node ${nodeId}: insufficient ${coinType} balance for ${sender} (have ${total}, need ${amount}).`,
+    );
+  }
+  const [primary, ...rest] = ids;
+  const primaryRef = tx.object(primary);
+  if (rest.length) tx.mergeCoins(primaryRef, rest.map((id) => tx.object(id)));
+  const [split] = tx.splitCoins(primaryRef, [amount]);
+  return split;
+}
 
 /**
  * Cetus CLMM swap. Builds `router::swap` directly (zero-coin pattern), so it composes into the same
@@ -44,14 +84,18 @@ export const cetusAdapter: ProtocolAdapter = {
     if (coinInputEdge) {
       coinInputArg = nodeOutputs[coinInputEdge.source];
       if (coinInputArg === undefined) {
-        throw new Error(
+        throw new ValidationError(
           `Node ${node.id}: upstream coin from ${coinInputEdge.source} is missing — ensure swap uses router::swap (wire coin_out → sui_coin).`,
         );
       }
     } else if (inputCoinType !== SUI_COIN_TYPE) {
-      throw new Error(
-        `Node ${node.id}: non-SUI input (${inputCoinType}) requires an upstream coin edge. Use Token in = SUI for standalone swap.`,
-      );
+      // Standalone swap with a non-SUI input → source it from the sender's own coins of that type.
+      if (!options.sender) {
+        throw new ValidationError(
+          `Node ${node.id}: non-SUI input (${inputCoinType}) needs a sender to source the coin from — pass \`sender\`.`,
+        );
+      }
+      coinInputArg = await sourceCoinFromSender(tx, options.sender, inputCoinType, amountIn, node.id);
     } else {
       coinInputArg = fundSuiCoin(amountIn);
     }
@@ -62,7 +106,7 @@ export const cetusAdapter: ProtocolAdapter = {
         flow.nodes.some((n) => n.id === e.target && n.type === 'haedal_stake'),
     );
     if (feedsHaedal && swap.outputCoinType !== SUI_COIN_TYPE) {
-      throw new Error(
+      throw new ValidationError(
         `Node ${node.id}: swap wired to Haedal stake must output SUI (set Token out = SUI / Token in = USDC).`,
       );
     }
@@ -109,7 +153,7 @@ export const cetusAdapter: ProtocolAdapter = {
         tx.mergeCoins(tx.gas, [coin as never]);
       } else {
         if (!options.sender) {
-          throw new Error(
+          throw new ValidationError(
             `Node ${node.id}: swap produces a non-SUI coin (${coinType}) with no recipient — pass \`sender\` (the owner address) so it isn't lost.`,
           );
         }

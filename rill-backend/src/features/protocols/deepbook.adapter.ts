@@ -1,6 +1,7 @@
 import { DeepBookClient } from '@mysten/deepbook-v3';
 import { config, suiClient } from '../../core/config';
 import { resolveDeepbookOrderConfig } from '../../core/node-config';
+import { ValidationError } from '../../core/errors';
 import type { AdapterCtx, ProtocolAdapter } from './types';
 
 /**
@@ -18,8 +19,29 @@ export const deepbookAdapter: ProtocolAdapter = {
 
   async build(ctx: AdapterCtx): Promise<void> {
     const { tx, node, options, warnings } = ctx;
-    const { config: order, warnings: cfgWarnings } = resolveDeepbookOrderConfig(node);
-    warnings.push(...cfgWarnings);
+    const { config: order } = resolveDeepbookOrderConfig(node);
+
+    // No BalanceManager yet → provision one (the user's DeepBook "account"). DeepBook requires a shared
+    // BalanceManager to exist before any order can reference it, so creation is its own transaction —
+    // create + share here; deposits/orders reuse its id afterwards. The user passes nothing.
+    if (!order.balanceManagerId) {
+      const provisioner = new DeepBookClient({
+        client: suiClient as never,
+        address: options.sender ?? '0x0',
+        network: config.network,
+      });
+      provisioner.balanceManager.createAndShareBalanceManager()(tx);
+      warnings.push(
+        `Node ${node.id}: no BalanceManager set — this transaction provisions one (create + share). ` +
+          `Reuse the new BalanceManager id to fund it and place orders.`,
+      );
+      return;
+    }
+
+    // Order path: now the order params are required.
+    if (!order.poolKey || order.price == null || order.quantity == null) {
+      throw new ValidationError(`Node ${node.id}: DeepBook order requires poolKey, price, and quantity.`);
+    }
 
     const db = new DeepBookClient({
       // SuiJsonRpcClient implements the core read API the SDK needs (read-only here; we only build).

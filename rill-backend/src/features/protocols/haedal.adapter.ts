@@ -1,4 +1,5 @@
 import { resolveHaedalStakeConfig } from '../../core/node-config';
+import { ValidationError } from '../../core/errors';
 import type { AdapterCtx, FlowGraph, FlowNode, ProtocolAdapter } from './types';
 
 /** Haedal liquid staking — stake SUI for haSUI. Consumes a SUI coin, produces no chainable output. */
@@ -22,7 +23,7 @@ export const haedalAdapter: ProtocolAdapter = {
     const amount = BigInt(stakeCfg.amount);
     const minStake = BigInt(stakeCfg.minStakeMist);
     if (amount < minStake) {
-      throw new Error(`Haedal minimum stake is ${minStake} mist. Got ${amount}.`);
+      throw new ValidationError(`Haedal minimum stake is ${minStake} mist. Got ${amount}.`);
     }
 
     const coinInputEdge = flow.edges.find(
@@ -33,7 +34,7 @@ export const haedalAdapter: ProtocolAdapter = {
     if (coinInputEdge) {
       coinInputArg = nodeOutputs[coinInputEdge.source];
       if (coinInputArg === undefined) {
-        throw new Error(
+        throw new ValidationError(
           `Node ${node.id}: missing SUI coin from ${coinInputEdge.source} — wire swap coin_out → sui_coin.`,
         );
       }
